@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0e0e10"/>
+  <!-- flame -->
+  <path d="M32 4c3.5 6.5 11 11 11 19.5a11 11 0 0 1-22 0c0-5.5 3.2-9 5.5-12 .9 3.8 2.5 6 4.8 7-.8-6 0-11 .7-14.5z" fill="#ff7a45"/>
+  <path d="M32 19.5c2.2 2.8 5.4 5 5.4 8.6a5.4 5.4 0 0 1-10.8 0c0-2.2 1.4-4 2.9-5.6.4 1.5 1.1 2.6 2.3 3-.3-2.1.2-4.2.2-6z" fill="#ffc07a"/>
+  <!-- wrapped torch head -->
+  <path d="M22.5 31.5h19l-3.2 7.5H25.7z" fill="#8a5a36"/>
+  <path d="M23.8 34.2h16.4" stroke="#5e3b22" stroke-width="1.4"/>
+  <!-- tapered handle with bindings -->
+  <path d="M27.6 39h8.8l-1.8 21h-5.2z" fill="#c9935f"/>
+  <path d="M27.9 45h8.2M28.4 52h7.2" stroke="#8a5a36" stroke-width="1.8"/>
+</svg>
