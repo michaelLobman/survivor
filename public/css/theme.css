@@ -1,0 +1,329 @@
+/*
+ * Softens stock Bootstrap into a clean, friendly dark look.
+ * Pages set data-bs-theme="dark"; the same selector here overrides Bootstrap's
+ * dark palette because this file loads after Bootstrap.
+ */
+:root,
+[data-bs-theme="dark"] {
+  --heading-font: "Literata", Georgia, "Times New Roman", serif;
+  --bs-body-font-family: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bs-body-bg: #0e0e10;
+  --bs-body-color: #ececee;
+  --bs-secondary-color: #9a9ca3;
+  --bs-border-color: #2a2a2f;
+  --bs-border-radius: 0.75rem;
+  --bs-border-radius-lg: 1rem;
+  --surface: #17171a;
+  --surface-raised: #202024;
+  --ink: #ececee;
+  --muted: #9a9ca3;
+  --positive: #3ecf8e;
+  --positive-soft: rgba(62, 207, 142, 0.12);
+  --negative: #ff6b5b;
+  --negative-soft: rgba(255, 107, 91, 0.12);
+  --primary: #ff7a45;
+  --primary-soft: rgba(255, 122, 69, 0.16);
+  --bs-primary: #ff7a45;
+  --bs-primary-rgb: 255, 122, 69;
+  --bs-link-color: #ff7a45;
+  --bs-link-color-rgb: 255, 122, 69;
+  --bs-link-hover-color: #ff9a70;
+  --bs-link-hover-color-rgb: 255, 154, 112;
+}
+
+/* Serif for the app title and headings; body text stays in Atkinson. */
+.site-brand,
+.section-title,
+h1,
+.h5 {
+  font-family: var(--heading-font);
+}
+
+.app-container {
+  max-width: 720px;
+}
+
+/* Header and page nav */
+.site-header {
+  background: var(--bs-body-bg);
+}
+.site-brand {
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 1.85rem;
+  line-height: 1.15;
+  text-decoration: none;
+}
+.site-tagline {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+  font-style: italic;
+  font-weight: 500;
+}
+.site-nav {
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.site-nav .nav-link {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.site-nav .nav-link:hover {
+  color: var(--ink);
+}
+.site-nav .nav-link.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Surfaces */
+.card {
+  --bs-card-bg: var(--surface);
+  border-color: var(--bs-border-color);
+  border-radius: 1rem;
+}
+.list-group {
+  --bs-list-group-bg: var(--surface);
+  --bs-list-group-border-color: var(--bs-border-color);
+}
+.table {
+  --bs-table-bg: transparent;
+}
+/* Tables inside rounded cards: keep text clear of the curved corners. */
+.card .table > :not(caption) > * > * {
+  padding: 0.65rem 1rem;
+}
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+.eyebrow {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* Castaway visuals */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-weight: 600;
+}
+.avatar-photo {
+  object-fit: cover;
+  object-position: center;
+  background: var(--surface-raised);
+}
+.tribe-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tribe-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
+.is-out {
+  opacity: 0.55;
+}
+
+/* Numbers */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.pts-pos {
+  color: var(--positive);
+}
+.pts-neg {
+  color: var(--negative);
+}
+.pts-zero {
+  color: var(--muted);
+}
+
+/* Standings: leader tinted green, anyone who dropped tinted red */
+.standings-row.is-leader {
+  background-color: var(--positive-soft);
+}
+.standings-row.is-leader .standings-rank {
+  color: var(--positive);
+  font-weight: 700;
+}
+.standings-row.is-dropping {
+  background-color: var(--negative-soft);
+}
+.standings-rank {
+  width: 1.5rem;
+  color: var(--muted);
+}
+
+/* Itemized breakdowns */
+.breakdown {
+  font-size: 0.85rem;
+  color: var(--bs-body-color);
+}
+.multiplier {
+  color: var(--muted);
+}
+.breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+}
+
+/* Pick chip: the one highlight color for what a player picked */
+.pick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.75rem 0.2rem 0.2rem;
+  border: 1px solid rgba(255, 122, 69, 0.35);
+  border-radius: 999px;
+  background: var(--primary-soft);
+}
+.pick-chip-name {
+  color: var(--primary);
+  font-weight: 600;
+}
+.pick-chip-note {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.pick-chip.is-empty {
+  padding: 0.25rem 0.75rem;
+  border-style: dashed;
+  border-color: var(--bs-border-color);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Episode links: one look everywhere */
+.ep-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ep-link:hover {
+  color: var(--bs-link-hover-color);
+}
+.ep-link-arrow {
+  font-size: 1.1em;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.ep-link:hover .ep-link-arrow {
+  transform: translateX(2px);
+}
+
+/* Episode picker: outlined pills, the current one filled in orange */
+.ep-pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+}
+.ep-pill {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  max-width: 11rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ep-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.ep-pill-title {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ep-pill:hover .ep-pill-title,
+.ep-pill.active .ep-pill-title {
+  color: inherit;
+  opacity: 0.85;
+}
+.ep-pill.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+/* Expandable rows (<details>): a chevron that turns when open */
+.expandable > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.expandable > summary::-webkit-details-marker {
+  display: none;
+}
+.chevron {
+  display: inline-block;
+  width: 1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.expandable[open] > summary .chevron {
+  transform: rotate(90deg);
+}
+
+/* Episode dashboard */
+.dash-section {
+  border-top: 1px solid var(--bs-border-color);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+.dash-name {
+  font-family: var(--heading-font);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.is-out-photo .avatar {
+  filter: grayscale(0.85);
+}
+.avatar-stack {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding-left: 8px;
+}
+.avatar-stack .avatar {
+  margin-left: -8px;
+  border: 2px solid var(--surface);
+}
