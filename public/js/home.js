@@ -55,6 +55,23 @@
 
   const isLocked = () => next && Date.now() >= next.airsAt;
 
+  // Before lock, the message follows who has picked: everyone is in; one or two
+  // stragglers are named; otherwise a general reminder.
+  function openMessage() {
+    const lockTime = `Picks lock ${UI.dateTime(next.airsAt)}`;
+    const missing = LEAGUE.players.filter((p) => !next.picks[p.id]);
+    if (missing.length === 0) {
+      return { headline: `All ${LEAGUE.players.length} picks are in`, note: `${lockTime}.` };
+    }
+    if (missing.length === 1) {
+      return { headline: lockTime, note: `Still waiting on ${esc(missing[0].name)}. No pick, no points.` };
+    }
+    if (missing.length === 2) {
+      return { headline: lockTime, note: `Still waiting on ${esc(missing[0].name)} and ${esc(missing[1].name)}. No pick, no points.` };
+    }
+    return { headline: lockTime, note: "Send your pick to the commissioner before the episode airs. No pick, no points." };
+  }
+
   // Two states: open for picks (with a countdown), then locked until results are posted.
   function episodeCard() {
     if (!next) return "";
@@ -62,14 +79,18 @@
     const badge = locked
       ? `<span class="badge rounded-pill text-bg-secondary">Locked</span>`
       : `<span class="badge rounded-pill text-bg-warning">Locks in ${UI.timeUntil(next.airsAt)}</span>`;
-    const body = locked
-      ? `<p class="fw-semibold mb-1 mt-2">Picks locked. Points coming soon.</p>
-        <p class="small text-body-secondary mb-0">Results post after the episode.</p>`
-      : `<p class="fw-semibold mb-1 mt-2">Picks lock ${UI.dateTime(next.airsAt)}</p>
+    let body;
+    if (locked) {
+      body = `<p class="fw-semibold mb-1 mt-2">Picks locked. Points coming soon.</p>
+        <p class="small text-body-secondary mb-0">Results post after the episode.</p>`;
+    } else {
+      const { headline, note } = openMessage();
+      body = `<p class="fw-semibold mb-1 mt-2">${headline}</p>
         <p class="small text-body-secondary mb-0">
-          Send your pick to the commissioner before the episode airs. No pick, no points.
+          ${note}
           Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale.
         </p>`;
+    }
     return `<section id="episode-card" class="card mb-4"><div class="card-body">
       <div class="d-flex justify-content-between align-items-center">
         <span class="eyebrow">Episode ${next.number}${next.title ? ` · ${esc(next.title)}` : ""}</span>
