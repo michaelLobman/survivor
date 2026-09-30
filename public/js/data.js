@@ -70,7 +70,7 @@ const LEAGUE = {
       number: 2,
       title: "Weaponized Honesty",
       airsAt: "2026-09-30T20:00:00-04:00",
-      picks: { mike: "jenna", annie: "kristin", michele: "carter", brandon: "sharonda", mary: "patt", kelsey: "lewis" },
+      picks: { mike: "jenna", annie: "kristin", michele: "carter", brandon: "sharonda", mary: "patt", kelsey: "lewis", john: "maggie"},
     },
   ],
 };
