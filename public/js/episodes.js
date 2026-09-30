@@ -12,15 +12,33 @@
   const requested = Number(new URLSearchParams(location.search).get("ep"));
   const episode = completed.find((e) => e.number === requested) || completed[completed.length - 1];
 
-  const pills = completed
-    .map((e) => {
-      const active = e === episode;
-      return `<a class="ep-pill${active ? " active" : ""}" href="?ep=${e.number}"${active ? ' aria-current="page"' : ""}>
-        <span class="ep-pill-number">Ep ${e.number}</span>
-        ${e.title ? `<span class="ep-pill-title">${esc(e.title)}</span>` : ""}
-      </a>`;
-    })
-    .join("");
+  // One switcher bar: ‹ › step between episodes; tapping the name opens the full list.
+  function switcher() {
+    const index = completed.indexOf(episode);
+    const step = (target, symbol, label) =>
+      target
+        ? `<a class="ep-step" href="?ep=${target.number}" aria-label="${label}: Episode ${target.number}">${symbol}</a>`
+        : `<span class="ep-step is-disabled" aria-hidden="true">${symbol}</span>`;
+    const options = completed
+      .map((e) => {
+        const current = e === episode;
+        return `<li><a class="ep-menu-option${current ? " active" : ""}" href="?ep=${e.number}"${current ? ' aria-current="page"' : ""}>
+          <span class="ep-menu-number">Ep ${e.number}</span><span>${esc(e.title || `Episode ${e.number}`)}</span>
+        </a></li>`;
+      })
+      .join("");
+    return `<nav class="card ep-switcher mb-3" aria-label="Episodes"><div class="card-body d-flex align-items-center gap-2">
+      ${step(completed[index - 1], "‹", "Previous")}
+      <details class="ep-menu flex-grow-1">
+        <summary class="text-center">
+          <div class="eyebrow">Episode ${episode.number} · ${episode.remainingAtLock} castaways</div>
+          <h1 class="ep-switcher-title">${esc(episode.title || `Episode ${episode.number}`)} <span class="ep-menu-caret" aria-hidden="true">▾</span></h1>
+        </summary>
+        <ul class="ep-menu-list list-unstyled">${options}</ul>
+      </details>
+      ${step(completed[index + 1], "›", "Next")}
+    </div></nav>`;
+  }
 
   // --- Episode dashboard: what happened, in show order, with faces ---
   const timeline = episode.timeline;
@@ -79,8 +97,8 @@
         const voted = ev.type === "votedOut";
         const votes = tally[id] || { votes: 0, points: 0 };
         const parts = [];
-        if (votes.votes) parts.push(`${plural(votes.votes, "vote")} <em class="multiplier">${UI.points(votes.points)}</em>`);
-        if (voted) parts.push(`voted out <em class="multiplier">${UI.points(ev.points)}</em>`);
+        if (votes.votes) parts.push(`${plural(votes.votes, "vote")} <em>${UI.pointsHtml(votes.points)}</em>`);
+        if (voted) parts.push(`voted out <em>${UI.pointsHtml(ev.points)}</em>`);
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
           <span class="is-out-photo">${UI.avatar(id, 64)}</span>
@@ -142,25 +160,8 @@
     return section("Tribe changes", list(moves));
   }
 
-  // ‹ › buttons to step between episodes; disabled at either end.
-  function stepper() {
-    const index = completed.indexOf(episode);
-    const step = (target, symbol, label) =>
-      target
-        ? `<a class="ep-step" href="?ep=${target.number}" aria-label="${label}: Episode ${target.number}">${symbol}</a>`
-        : `<span class="ep-step is-disabled" aria-hidden="true">${symbol}</span>`;
-    return `<div class="d-flex gap-2 flex-shrink-0">${step(completed[index - 1], "‹", "Previous")}${step(completed[index + 1], "›", "Next")}</div>`;
-  }
-
   function dashboard() {
     return `<section class="card mb-4 episode-dashboard"><div class="card-body">
-      <div class="d-flex align-items-start justify-content-between gap-3">
-        <div>
-          <div class="eyebrow">Episode ${episode.number} · ${episode.remainingAtLock} castaways at lock</div>
-          <h1 class="h5 mt-1 mb-0">${esc(episode.title || `Episode ${episode.number}`)}</h1>
-        </div>
-        ${stepper()}
-      </div>
       ${peopleSection("Sole Survivor", ["soleSurvivor"])}
       ${bootsSection()}
       ${challengesSection()}
@@ -228,7 +229,7 @@
   }
 
   app.innerHTML = `${UI.errorsHtml()}
-    <nav class="ep-pills mb-3" aria-label="Choose an episode">${pills}</nav>
+    ${switcher()}
     ${dashboard()}
     ${scoresSection()}`;
 
@@ -245,7 +246,9 @@
     }),
   );
 
-  // Late in the season the picker is wider than the screen; bring the current episode into view.
-  const activePill = document.querySelector(".ep-pill.active");
-  if (activePill) activePill.scrollIntoView({ block: "nearest", inline: "center" });
+  // Close the episode list when tapping anywhere else.
+  const menu = document.querySelector(".ep-menu");
+  document.addEventListener("click", (event) => {
+    if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
 })();

@@ -16,7 +16,7 @@
       ${UI.avatar(season.winner, 64)}
       <div>
         <div class="eyebrow">Sole Survivor: ${esc(UI.castawayById.get(season.winner).name)}</div>
-        <div class="fw-semibold">League champion: ${esc(champ.player.name)} with ${champ.total} points</div>
+        <div class="fw-semibold">League champion: ${esc(champ.player.name)} with ${UI.pointsHtml(champ.total)} points</div>
       </div>
     </div></section>`;
   }
@@ -62,7 +62,7 @@
       <p class="fw-semibold mb-1 mt-2">${locked ? "Picks are locked" : `Picks lock ${UI.dateTime(next.airsAt)}`}</p>
       <p class="small text-body-secondary mb-0">
         ${locked ? "Results will be posted after the episode." : "Send your pick to the commissioner before the episode airs. No pick, no points."}
-        Picking the eventual winner this week is worth <strong>${UI.points(next.remainingAtLock)}</strong> at the finale.
+        Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale.
       </p>
     </div></section>`;
   }
@@ -106,7 +106,7 @@
     const chips = stats.favorites
       .map(
         (f) => `<span class="d-inline-flex align-items-center gap-2">${UI.pickChip({ castaway: f.id }, 28, QUIET)}
-          <span class="small text-nowrap">×${f.count} <em class="multiplier">${UI.points(f.points)}</em></span></span>`,
+          <span class="small text-nowrap">×${f.count} <em>${UI.pointsHtml(f.points)}</em></span></span>`,
       )
       .join("");
     return `<div class="mt-3"><div class="eyebrow mb-2">Most picked</div><div class="d-flex flex-wrap gap-3">${chips}</div></div>`;
@@ -176,7 +176,7 @@
           ${lastWeek}${thisWeek}
         </div>
         <div class="text-end flex-shrink-0">
-          <div class="fs-5 fw-semibold tabular">${row.total}</div>
+          <div>${UI.pointsHtml(row.total, "fs-5 fw-semibold")}</div>
           ${movementHtml(row.movement)}
         </div>
         <span class="chevron" aria-hidden="true">›</span>

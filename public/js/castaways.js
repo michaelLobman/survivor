@@ -31,7 +31,7 @@
             <div class="fw-semibold text-truncate">${esc(c.name)}</div>
             <div class="d-flex flex-wrap align-items-center gap-2 mt-1">${UI.tribeBadge(stats.tribe)} ${status}</div>
             <div class="eyebrow mt-1">
-              <span class="tabular">${UI.points(stats.seasonPoints)}</span> season pts ·
+              ${UI.pointsHtml(stats.seasonPoints)} season pts ·
               picked ${stats.timesPicked} ${stats.timesPicked === 1 ? "time" : "times"}
             </div>
           </div>

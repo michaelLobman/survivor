@@ -58,6 +58,7 @@ const LEAGUE = {
       picks: {},
       events: [
         { type: "reward", tribe: "savu" },
+        { type: "advantage", castaway: "rob" },
         { type: "immunity", tribe: "savu" },
         { type: "moveTribe", castaway: "lewis", tribe: "toka" },
         { type: "votesAgainst", castaway: "aaliyah", count: 6 },

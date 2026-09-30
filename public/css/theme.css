@@ -311,18 +311,27 @@ a.ep-step:hover {
   font-size: 0.85rem;
 }
 
-/* Episode links: one look everywhere */
+/* Episode links: small outlined buttons, one look everywhere */
 .ep-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid rgba(255, 122, 69, 0.5);
+  border-radius: 999px;
   color: var(--primary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
+/* On hover the button fills in and grows slightly; the arrow nudges forward. */
 .ep-link:hover {
-  color: var(--bs-link-hover-color);
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+  transform: scale(1.05);
 }
 .ep-link-arrow {
   font-size: 1.1em;
@@ -333,47 +342,72 @@ a.ep-step:hover {
   transform: translateX(2px);
 }
 
-/* Episode picker: outlined pills, the current one filled in orange */
-.ep-pills {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
+/* Episode switcher: ‹ name › with a dropdown list of every episode */
+.ep-switcher {
+  position: relative;
+  z-index: 2;
 }
-.ep-pill {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  max-width: 11rem;
-  padding: 0.45rem 0.9rem;
-  border: 1px solid var(--bs-border-color);
-  border-radius: 0.75rem;
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 0.9rem;
+.ep-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.ep-menu > summary::-webkit-details-marker {
+  display: none;
+}
+.ep-switcher-title {
+  margin: 0.15rem 0 0;
+  color: var(--primary);
+  font-size: 1.2rem;
   font-weight: 600;
+}
+.ep-menu-caret {
+  color: var(--primary);
+  font-size: 0.8em;
+}
+.ep-menu-list {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 60vh;
+  margin: 0;
+  padding: 0.35rem;
+  overflow-y: auto;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  background: var(--surface-raised);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.ep-menu-option {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.6rem;
+  color: var(--ink);
   text-decoration: none;
 }
-.ep-pill:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.ep-menu-option:hover {
+  background: var(--surface);
 }
-.ep-pill-title {
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 400;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ep-pill:hover .ep-pill-title,
-.ep-pill.active .ep-pill-title {
-  color: inherit;
-  opacity: 0.85;
-}
-.ep-pill.active {
-  border-color: var(--primary);
+.ep-menu-option.active {
   background: var(--primary-soft);
   color: var(--primary);
+}
+.ep-menu-number {
+  width: 2.5rem;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+.ep-menu-option.active .ep-menu-number {
+  color: inherit;
+}
+
+/* The dashboard's first section needs no divider above it. */
+.episode-dashboard .dash-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .min-w-0 {
