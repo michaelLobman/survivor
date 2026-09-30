@@ -149,8 +149,9 @@ h1,
   height: 0.5rem;
   border-radius: 50%;
 }
-.is-out {
-  opacity: 0.55;
+/* Out of the game: grey the face, not the text, so labels keep full contrast. */
+.is-out .avatar {
+  filter: grayscale(0.85);
 }
 
 /* Numbers */
@@ -445,9 +446,6 @@ a.ep-step:hover {
   font-family: var(--heading-font);
   font-size: 1.15rem;
   font-weight: 600;
-}
-.is-out-photo .avatar {
-  filter: grayscale(0.85);
 }
 .avatar-stack {
   display: inline-flex;

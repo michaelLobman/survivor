@@ -124,6 +124,16 @@ test("a missed pick scores zero (picks never carry over)", () => {
   assert.strictEqual(playerTotal(result, 2, "p1"), 0);
 });
 
+test("leaving the game (quit / medevac) is worth nothing either way; earlier wins still count", () => {
+  const result = scoreSeason(
+    league({
+      episodes: [{ picks: { p1: "c1" }, events: [{ type: "immunity", tribe: "a" }, { type: "leftGame", castaway: "c1" }] }],
+    }),
+  );
+  assert.deepStrictEqual(result.errors, []);
+  assert.strictEqual(playerTotal(result, 1, "p1"), 10); // immunity only: no survived points, no penalty
+});
+
 // Tribes
 test("tribe events use the roster at that moment, minus exceptions", () => {
   const result = scoreSeason(
@@ -146,6 +156,53 @@ test("tribe events use the roster at that moment, minus exceptions", () => {
   assert.strictEqual(playerTotal(result, 1, "p2"), 5);
   assert.strictEqual(playerTotal(result, 1, "p3"), 15);
   assert.strictEqual(result.castaways.c3.tribe, "b");
+});
+
+test("state events accept a list of castaways", () => {
+  const result = scoreSeason(
+    league({
+      episodes: [
+        {
+          picks: { p1: "c1", p2: "c2" },
+          events: [
+            { type: "moveTribe", castaways: ["c1", "c2"], tribe: "b" },
+            { type: "leftGame", castaways: ["c9", "c10"] },
+            { type: "immunity", tribe: "b" },
+          ],
+        },
+      ],
+    }),
+  );
+  assert.deepStrictEqual(result.errors, []);
+  assert.strictEqual(result.castaways.c1.tribe, "b");
+  assert.strictEqual(result.castaways.c9.active, false);
+  assert.strictEqual(result.castaways.c10.eliminatedIn, 1);
+  assert.strictEqual(result.episodes[0].castawayPoints.c9, undefined); // left: no points either way
+  assert.strictEqual(playerTotal(result, 1, "p1"), 15); // moved in time for immunity
+});
+
+test("there is exactly one Sole Survivor", () => {
+  const result = scoreSeason(
+    league({
+      size: 3,
+      episodes: [
+        {
+          events: [
+            { type: "soleSurvivor", castaways: ["c1", "c2"] },
+            { type: "soleSurvivor", castaway: "c1" },
+            { type: "soleSurvivor", castaway: "c2" },
+          ],
+        },
+      ],
+    }),
+  );
+  assert.strictEqual(result.winner, "c1");
+  assert.strictEqual(result.errors.filter((e) => /exactly one Sole Survivor/.test(e)).length, 2);
+});
+
+test("a state event without a castaway says so", () => {
+  const result = scoreSeason(league({ episodes: [{ events: [{ type: "leftGame" }] }] }));
+  assert.match(result.errors.join("\n"), /\(leftGame\): needs a castaway or castaways/);
 });
 
 test("timeline records who each event credited, with tribes expanded", () => {
@@ -207,8 +264,28 @@ test("standings movement compares with the previous episode", () => {
     }),
   );
   const p2 = result.standings.find((r) => r.player.id === "p2");
+  const p1 = result.standings.find((r) => r.player.id === "p1");
   assert.strictEqual(p2.rank, 1);
   assert.strictEqual(p2.movement, 1);
+  assert.strictEqual(p1.movement, -1); // drives the red "dropping" tint on the home page
+});
+
+test("finale-week movement ranks the week before without the not-yet-known winner", () => {
+  // Before the finale p1 and p2 are tied on points, but p2 backed the eventual winner (c2) and p1
+  // didn't. Last week's ranking must not use that tiebreak, so both were rank 1 then.
+  const result = scoreSeason(
+    league({
+      players: ["p1", "p2", "p3"],
+      size: 4,
+      episodes: [
+        { picks: { p1: "c1", p2: "c2", p3: "c4" }, events: bootEvents("c4", 3) },
+        { picks: { p1: "c1", p2: "c2" }, events: [...bootEvents("c3", 2), { type: "soleSurvivor", castaway: "c2" }] },
+      ],
+    }),
+  );
+  const movement = Object.fromEntries(result.standings.map((r) => [r.player.id, r.movement]));
+  assert.strictEqual(movement.p2, 0); // rank 1 before (tied), rank 1 now
+  assert.strictEqual(movement.p1, -1); // rank 1 before (tied), rank 2 now
 });
 
 test("no movement when the previous standings were a complete tie", () => {
@@ -239,9 +316,40 @@ test("reports unknown ids, bad counts, and picks of eliminated castaways", () =>
   assert.match(joined, /event 2 \(immunty\): unknown event type/);
 });
 
+test("reports duplicate ids, bad dates, and results entered out of order", () => {
+  const data = league({
+    players: ["p1", "p1"],
+    episodes: [{ events: [] }, { airsAt: "2026-10-7T20:00:00-04:00" }, { events: [] }],
+  });
+  data.castaways.push({ id: "c1", name: "Copy", tribe: "a" });
+  data.episodes.push({ number: 3, airsAt: "2026-01-01T20:00:00-05:00" });
+  const joined = scoreSeason(data).errors.join("\n");
+  assert.match(joined, /Duplicate player id "p1"/);
+  assert.match(joined, /Duplicate castaway id "c1"/);
+  assert.match(joined, /Duplicate episode number 3/);
+  assert.match(joined, /Episode 2: airsAt "2026-10-7T20:00:00-04:00" is not a valid date/);
+  assert.match(joined, /Episode 2 has no events, but episode 3 does/);
+});
+
 // The real season data must always be valid.
 test("public/js/data.js has no data errors", () => {
   assert.deepStrictEqual(scoreSeason(LEAGUE).errors, []);
+});
+
+// Catches a stale offset after a daylight saving change, e.g. "-04:00" on a
+// November date, which would lock picks an hour early.
+test("every airsAt offset matches Eastern time on that date", () => {
+  const eastern = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+  for (const ep of LEAGUE.episodes) {
+    const typed = ep.airsAt.match(/T(\d{2}:\d{2})/)?.[1];
+    const actual = eastern.format(new Date(ep.airsAt));
+    assert.strictEqual(actual, typed, `Episode ${ep.number}: "${ep.airsAt}" is ${actual} ET, not ${typed}. Check the offset (-04:00 in summer, -05:00 in winter).`);
+  }
 });
 
 let failed = 0;

@@ -53,7 +53,7 @@
 
     <h2 class="section-title mb-2">Pick rules</h2>
     <ul class="small">
-      <li>Picks lock when the episode starts airing (8 PM ET).</li>
+      <li>Picks lock when the episode starts airing. The <a href="index.html">Standings</a> page shows the exact time and a countdown.</li>
       <li>No pick means no points that week. Picks don't carry over.</li>
       <li>Everyone's picks are visible as soon as they're in.</li>
       <li>Final ties go to whoever picked the winner more often, then the best single episode.</li>

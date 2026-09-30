@@ -35,21 +35,25 @@ const UI = (() => {
   }
 
   // A photo ringed in tribe color when `photo` is set in data.js, otherwise initials.
-  function avatar(castawayId, size = 40) {
+  // Decorative by default (a name sits beside it); `named` labels a face shown alone.
+  function avatar(castawayId, size = 40, { named = false } = {}) {
     const c = castawayById.get(castawayId);
     const tribe = tribeById.get(season.castaways[castawayId].tribe);
     const bg = tribe ? tribe.color : "#3a3a40";
+    const title = named ? ` title="${esc(c.name)}"` : "";
     if (c.photo) {
       const ring = Math.max(2, Math.round(size / 20));
-      return `<img class="avatar avatar-photo" src="${esc(c.photo)}" alt="" loading="lazy" width="${size}" height="${size}" style="box-shadow:0 0 0 ${ring}px ${bg}">`;
+      const alt = named ? esc(c.name) : "";
+      return `<img class="avatar avatar-photo" src="${esc(c.photo)}" alt="${alt}"${title} loading="lazy" width="${size}" height="${size}" style="box-shadow:0 0 0 ${ring}px ${bg}">`;
     }
+    const a11y = named ? `role="img" aria-label="${esc(c.name)}"${title}` : `aria-hidden="true"`;
     const initials = c.name
       .replace(/“.*?”\s*/g, "")
       .split(/\s+/)
       .map((part) => part[0])
       .slice(0, 2)
       .join("");
-    return `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${size * 0.38}px;background:${bg};color:${textOn(bg)}" aria-hidden="true">${esc(initials)}</span>`;
+    return `<span class="avatar" style="width:${size}px;height:${size}px;font-size:${size * 0.38}px;background:${bg};color:${textOn(bg)}" ${a11y}>${esc(initials)}</span>`;
   }
 
   function tribeBadge(tribeId) {

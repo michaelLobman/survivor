@@ -72,6 +72,40 @@
     bucket[id].total += item.points;
   }
 
+  // Returns each value that appears more than once.
+  function duplicates(values) {
+    const seen = new Set();
+    const repeated = new Set();
+    for (const value of values) {
+      if (seen.has(value)) repeated.add(value);
+      seen.add(value);
+    }
+    return [...repeated];
+  }
+
+  // Mistakes in the shape of the data (not in what happened on the show).
+  // `episodes` must already be sorted by number.
+  function structureErrors(league, episodes) {
+    const errors = [];
+    for (const id of duplicates(league.players.map((p) => p.id))) errors.push(`Duplicate player id "${id}"`);
+    for (const id of duplicates(league.castaways.map((c) => c.id))) errors.push(`Duplicate castaway id "${id}"`);
+    for (const n of duplicates(episodes.map((ep) => ep.number))) errors.push(`Duplicate episode number ${n}`);
+
+    for (const ep of episodes) {
+      if (Number.isNaN(new Date(ep.airsAt).getTime())) {
+        errors.push(`Episode ${ep.number}: airsAt "${ep.airsAt}" is not a valid date`);
+      }
+    }
+
+    // Results must be entered in order: no aired episode after one still missing its events.
+    const firstUpcoming = episodes.find((ep) => !Array.isArray(ep.events));
+    const laterAired = firstUpcoming && episodes.find((ep) => ep.number > firstUpcoming.number && Array.isArray(ep.events));
+    if (laterAired) {
+      errors.push(`Episode ${firstUpcoming.number} has no events, but episode ${laterAired.number} does`);
+    }
+    return errors;
+  }
+
   /**
    * Replays the whole season in episode order and returns everything the
    * pages need: per-episode castaway and player points, standings, castaway
@@ -103,6 +137,8 @@
     };
 
     const episodes = [...league.episodes].sort((a, b) => a.number - b.number);
+    errors.push(...structureErrors(league, episodes));
+
     const results = episodes.map((ep, index) => {
       const where = `Episode ${ep.number}`;
       const activeAtStart = [...active];
@@ -161,6 +197,9 @@
         return true;
       };
 
+      // `castaway: "x"` and `castaways: ["x", "y"]` are interchangeable.
+      const listedIds = (ev) => ev.castaways || (ev.castaway ? [ev.castaway] : []);
+
       // A tribe target expands to its current members, minus any exceptions.
       const resolveTargets = (ev, at) => {
         if (ev.tribe) {
@@ -172,30 +211,51 @@
           except.forEach((cid) => checkCastaway(cid, at));
           return [...active].filter((cid) => tribeOf[cid] === ev.tribe && !except.includes(cid));
         }
-        const ids = ev.castaways || (ev.castaway ? [ev.castaway] : []);
+        const ids = listedIds(ev);
         if (ids.length === 0) errors.push(`${at}: needs a castaway, castaways, or tribe`);
         return ids.filter((cid) => checkCastaway(cid, at));
+      };
+
+      // State events change the game instead of scoring. On moveTribe, `tribe`
+      // is the destination, so castaways are always listed, never expanded.
+      const applyStateEvent = (ev, at) => {
+        if (ev.type === "individualGame") {
+          individualGame = true;
+          result.timeline.push({ type: ev.type, castaways: [], tribe: null, count: null, points: null });
+          return;
+        }
+        const ids = listedIds(ev);
+        if (ids.length === 0) {
+          errors.push(`${at}: needs a castaway or castaways`);
+          return;
+        }
+        if (ev.type === "soleSurvivor" && (ids.length !== 1 || winner)) {
+          errors.push(`${at}: there is exactly one Sole Survivor`);
+          return;
+        }
+        if (ev.type === "moveTribe" && !tribeIds.has(ev.tribe)) {
+          errors.push(`${at}: unknown tribe "${ev.tribe}"`);
+          return;
+        }
+        const valid = ids.filter((cid) => checkCastaway(cid, at));
+        if (valid.length === 0) return;
+
+        result.timeline.push({ type: ev.type, castaways: valid, tribe: ev.tribe || null, count: null, points: null });
+        if (ev.type === "moveTribe") {
+          valid.forEach((cid) => (tribeOf[cid] = ev.tribe));
+        } else if (ev.type === "leftGame") {
+          valid.forEach(eliminate);
+        } else if (ev.type === "soleSurvivor") {
+          winner = valid[0];
+          finaleIndex = index;
+        }
       };
 
       ep.events.forEach((ev, i) => {
         const at = `${where}, event ${i + 1} (${ev.type})`;
 
         if (STATE_EVENTS.has(ev.type)) {
-          if (ev.type === "individualGame") {
-            individualGame = true;
-            result.timeline.push({ type: ev.type, castaways: [], tribe: null, count: null, points: null });
-          } else if (checkCastaway(ev.castaway, at)) {
-            result.timeline.push({ type: ev.type, castaways: [ev.castaway], tribe: ev.tribe || null, count: null, points: null });
-            if (ev.type === "moveTribe") {
-              if (tribeIds.has(ev.tribe)) tribeOf[ev.castaway] = ev.tribe;
-              else errors.push(`${at}: unknown tribe "${ev.tribe}"`);
-            } else if (ev.type === "leftGame") {
-              eliminate(ev.castaway);
-            } else if (ev.type === "soleSurvivor") {
-              winner = ev.castaway;
-              finaleIndex = index;
-            }
-          }
+          applyStateEvent(ev, at);
           return;
         }
 
@@ -240,7 +300,8 @@
     });
 
     // Sole Survivor bonus: every completed week's pick of the winner, paid in the finale.
-    const winnerPicks = Object.fromEntries(playerIds.map((pid) => [pid, 0]));
+    const noWinnerPicks = Object.fromEntries(playerIds.map((pid) => [pid, 0]));
+    const winnerPicks = { ...noWinnerPicks };
     if (winner) {
       const finale = results[finaleIndex];
       for (const result of results.filter((r) => r.completed)) {
@@ -263,7 +324,11 @@
     const completed = results.filter((r) => r.completed);
     const standings = rankPlayers(league.players, completed, winnerPicks);
     if (completed.length > 1) {
-      const previous = rankPlayers(league.players, completed.slice(0, -1), winnerPicks);
+      // Rank last week with only what was known then: the winner-picks tiebreak
+      // applies only if the finale had already aired.
+      const earlier = completed.slice(0, -1);
+      const winnerKnown = winner && earlier.includes(results[finaleIndex]);
+      const previous = rankPlayers(league.players, earlier, winnerKnown ? winnerPicks : noWinnerPicks);
       // Movement from a complete tie (e.g. a week with no picks) is meaningless, so skip it.
       if (!previous.every((row) => row.rank === 1)) {
         const previousRank = Object.fromEntries(previous.map((row) => [row.player.id, row.rank]));

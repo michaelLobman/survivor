@@ -65,7 +65,7 @@
   // A tribe win shows the tribe plus overlapping faces of everyone it credited.
   function winners(ev) {
     const who = ev.tribe
-      ? `<span class="d-flex flex-wrap align-items-center gap-2">${UI.tribeBadge(ev.tribe)}<span class="avatar-stack">${ev.castaways.map((id) => UI.avatar(id, 32)).join("")}</span></span>`
+      ? `<span class="d-flex flex-wrap align-items-center gap-2">${UI.tribeBadge(ev.tribe)}<span class="avatar-stack">${ev.castaways.map((id) => UI.avatar(id, 32, { named: true })).join("")}</span></span>`
       : `<span class="d-flex flex-wrap gap-3">${ev.castaways.map((id) => person(id)).join("")}</span>`;
     return row(who, eventPoints(ev));
   }
@@ -101,7 +101,7 @@
         if (voted) parts.push(`voted out <em>${UI.pointsHtml(ev.points)}</em>`);
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
-          <span class="is-out-photo">${UI.avatar(id, 64)}</span>
+          <span class="is-out">${UI.avatar(id, 64)}</span>
           <div class="flex-grow-1">
             <div class="eyebrow">${voted ? "Voted out" : "Left the game"}</div>
             <div class="dash-name">${esc(UI.castawayById.get(id).name)}</div>
@@ -151,10 +151,12 @@
   }
 
   function movesSection() {
-    const moves = ofType("moveTribe").map((ev) =>
-      row(
-        `<span class="d-flex align-items-center gap-2">${person(ev.castaways[0])}<span class="text-body-secondary">→</span>${UI.tribeBadge(ev.tribe)}</span>`,
-        "",
+    const moves = ofType("moveTribe").flatMap((ev) =>
+      ev.castaways.map((id) =>
+        row(
+          `<span class="d-flex align-items-center gap-2">${person(id)}<span class="text-body-secondary">→</span>${UI.tribeBadge(ev.tribe)}</span>`,
+          "",
+        ),
       ),
     );
     return section("Tribe changes", list(moves));
@@ -219,9 +221,9 @@
   function scoresSection() {
     return `<div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="section-title">Scores</h2>
-        <div class="segmented" role="tablist" aria-label="Show scores for">
-          <button type="button" class="segmented-option active" role="tab" aria-selected="true" data-view="players">Players</button>
-          <button type="button" class="segmented-option" role="tab" aria-selected="false" data-view="castaways">Castaways</button>
+        <div class="segmented" role="group" aria-label="Show scores for">
+          <button type="button" class="segmented-option active" aria-pressed="true" data-view="players">Players</button>
+          <button type="button" class="segmented-option" aria-pressed="false" data-view="castaways">Castaways</button>
         </div>
       </div>
       <div data-scores="players">${playerScores()}</div>
@@ -238,7 +240,7 @@
       document.querySelectorAll(".segmented-option").forEach((b) => {
         const selected = b === button;
         b.classList.toggle("active", selected);
-        b.setAttribute("aria-selected", String(selected));
+        b.setAttribute("aria-pressed", String(selected));
       });
       document.querySelectorAll("[data-scores]").forEach((list) => {
         list.hidden = list.dataset.scores !== button.dataset.view;
@@ -246,9 +248,14 @@
     }),
   );
 
-  // Close the episode list when tapping anywhere else.
+  // Close the episode list when tapping anywhere else, or on Escape.
   const menu = document.querySelector(".ep-menu");
   document.addEventListener("click", (event) => {
     if (menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !menu.open) return;
+    menu.open = false;
+    menu.querySelector("summary").focus(); // back to where the keyboard user started
   });
 })();

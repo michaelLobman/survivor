@@ -6,6 +6,8 @@
   const next = season.nextEpisode;
   const completed = season.episodes.filter((e) => e.completed);
   const lastCompleted = completed[completed.length - 1];
+  // Episodes before the league started (nobody picked) are left out of player cards.
+  const leaguePicked = (e) => Object.values(e.picks).some(Boolean);
   // Orange on this page belongs to the top scorers card, so pick chips stay neutral.
   const QUIET = { quiet: true };
 
@@ -51,19 +53,29 @@
     </div></section>`;
   }
 
+  const isLocked = () => next && Date.now() >= next.airsAt;
+
+  // Two states: open for picks (with a countdown), then locked until results are posted.
   function episodeCard() {
     if (!next) return "";
-    const locked = Date.now() >= next.airsAt;
-    return `<section class="card mb-4"><div class="card-body">
+    const locked = isLocked();
+    const badge = locked
+      ? `<span class="badge rounded-pill text-bg-secondary">Locked</span>`
+      : `<span class="badge rounded-pill text-bg-warning">Locks in ${UI.timeUntil(next.airsAt)}</span>`;
+    const body = locked
+      ? `<p class="fw-semibold mb-1 mt-2">Picks locked. Points coming soon.</p>
+        <p class="small text-body-secondary mb-0">Results post after the episode.</p>`
+      : `<p class="fw-semibold mb-1 mt-2">Picks lock ${UI.dateTime(next.airsAt)}</p>
+        <p class="small text-body-secondary mb-0">
+          Send your pick to the commissioner before the episode airs. No pick, no points.
+          Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale.
+        </p>`;
+    return `<section id="episode-card" class="card mb-4"><div class="card-body">
       <div class="d-flex justify-content-between align-items-center">
         <span class="eyebrow">Episode ${next.number}${next.title ? ` · ${esc(next.title)}` : ""}</span>
-        <span id="lock-status" class="badge rounded-pill ${locked ? "text-bg-secondary" : "text-bg-warning"}"></span>
+        ${badge}
       </div>
-      <p class="fw-semibold mb-1 mt-2">${locked ? "Picks are locked" : `Picks lock ${UI.dateTime(next.airsAt)}`}</p>
-      <p class="small text-body-secondary mb-0">
-        ${locked ? "Results will be posted after the episode." : "Send your pick to the commissioner before the episode airs. No pick, no points."}
-        Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale.
-      </p>
+      ${body}
     </div></section>`;
   }
 
@@ -112,11 +124,12 @@
     return `<div class="mt-3"><div class="eyebrow mb-2">Most picked</div><div class="d-flex flex-wrap gap-3">${chips}</div></div>`;
   }
 
-  // Each past episode: pick and points, expanding to the itemized breakdown.
+  // Each past episode: pick and points, expanding to the itemized breakdown and a
+  // link to the episode. The link stays out of <summary> so a row has one tap target.
   function historyRow(e, playerId) {
     const pick = e.picks[playerId];
     const score = e.playerPoints[playerId];
-    const head = `<span class="history-ep">${UI.episodeLink(e.number, `Ep ${e.number}`)}</span>
+    const head = `<span class="history-ep eyebrow">Ep ${e.number}</span>
       <span class="flex-grow-1">${UI.pickChip(pick, 28, QUIET)}</span>
       ${UI.pointsHtml(score.total, "fw-semibold")}`;
     if (score.items.length === 0) {
@@ -125,21 +138,24 @@
     return `<li class="history-row">
       <details class="expandable">
         <summary class="d-flex align-items-center gap-3">${head}<span class="chevron" aria-hidden="true">›</span></summary>
-        <ul class="list-unstyled breakdown mt-2 mb-1 pe-4 history-breakdown">${score.items.map(UI.breakdownItem).join("")}</ul>
+        <div class="history-breakdown pe-4 mt-2 mb-1">
+          <ul class="list-unstyled breakdown mb-2">${score.items.map(UI.breakdownItem).join("")}</ul>
+          ${UI.episodeLink(e.number, "See episode")}
+        </div>
       </details>
     </li>`;
   }
 
   function historySection(playerId) {
-    const rows = [...completed].reverse().map((e) => historyRow(e, playerId));
-    if (next) {
-      rows.unshift(`<li class="history-row d-flex align-items-center gap-3">
-        <span class="history-ep eyebrow">Ep ${next.number}</span>
-        <span class="flex-grow-1">${UI.pickChip(next.picks[playerId], 28, QUIET)}</span>
-        <span class="eyebrow">Upcoming</span><span class="chevron-spacer"></span>
-      </li>`);
-    }
-    return `<div class="mt-3"><div class="eyebrow mb-1">Pick history</div><ul class="list-unstyled mb-0">${rows.join("")}</ul></div>`;
+    // Completed episodes only; this week's pick is already on the card's "This week" line.
+    const rows = completed
+      .filter(leaguePicked)
+      .reverse()
+      .map((e) => historyRow(e, playerId));
+    const body = rows.length
+      ? `<ul class="list-unstyled mb-0">${rows.join("")}</ul>`
+      : `<p class="small text-body-secondary fst-italic mb-0">N/A</p>`;
+    return `<div class="mt-3"><div class="eyebrow mb-1">Pick history</div>${body}</div>`;
   }
 
   function movementHtml(movement) {
@@ -164,9 +180,11 @@
     const pickLine = (label, pick, points) => `<div class="pick-line">
         <span class="eyebrow">${label}</span>${UI.pickChip(pick, 24, QUIET)}${points === null ? "" : UI.pointsHtml(points, "small fw-semibold")}
       </div>`;
-    const lastWeek = lastCompleted
-      ? pickLine("Last week", lastCompleted.picks[player.id], lastCompleted.picks[player.id] ? lastCompleted.playerPoints[player.id].total : null)
-      : "";
+    let lastWeek = "";
+    if (lastCompleted && leaguePicked(lastCompleted)) {
+      const pick = lastCompleted.picks[player.id];
+      lastWeek = pickLine("Last week", pick, pick ? lastCompleted.playerPoints[player.id].total : null);
+    }
     const thisWeek = next ? pickLine("This week", next.picks[player.id], null) : "";
     return `<details class="card expandable standings-row mb-2${rowState(row)}" id="${esc(player.id)}">
       <summary class="card-body d-flex align-items-center gap-3">
@@ -207,11 +225,11 @@
     target.scrollIntoView({ block: "start" });
   }
 
-  function updateLockStatus() {
-    const badge = document.getElementById("lock-status");
-    if (!badge) return;
-    badge.textContent = Date.now() >= next.airsAt ? "Locked" : `Locks in ${UI.timeUntil(next.airsAt)}`;
+  // Keep the countdown fresh; once locked, nothing changes until results are published.
+  if (next && !isLocked()) {
+    const timer = setInterval(() => {
+      document.getElementById("episode-card").outerHTML = episodeCard();
+      if (isLocked()) clearInterval(timer);
+    }, 30000);
   }
-  updateLockStatus();
-  setInterval(updateLockStatus, 30000);
 })();
