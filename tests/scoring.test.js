@@ -118,14 +118,8 @@ test("rewards: tribe, individual, and chosen guests score differently", () => {
 });
 
 // Picks
-test("missed pick carries over the previous pick", () => {
+test("a missed pick scores zero (picks never carry over)", () => {
   const result = scoreSeason(league({ episodes: [{ picks: { p1: "c1" }, events: [] }, { events: [] }] }));
-  assert.deepStrictEqual(result.episodes[1].picks.p1, { castaway: "c1", carried: true });
-  assert.strictEqual(playerTotal(result, 2, "p1"), 5);
-});
-
-test("carryover lapses when the previous pick is out", () => {
-  const result = scoreSeason(league({ episodes: [{ picks: { p1: "c1" }, events: bootEvents("c1", 5) }, { events: [] }] }));
   assert.strictEqual(result.episodes[1].picks.p1, null);
   assert.strictEqual(playerTotal(result, 2, "p1"), 0);
 });
@@ -183,7 +177,7 @@ test("winner bonus pays castaways-at-lock for every pick of the winner, in the f
       size: 4,
       episodes: [
         { picks: { p1: "c1", p2: "c2" }, events: bootEvents("c4", 3) },
-        { picks: { p2: "c1" }, events: [...bootEvents("c3", 2), { type: "soleSurvivor", castaway: "c1" }] },
+        { picks: { p1: "c1", p2: "c1" }, events: [...bootEvents("c3", 2), { type: "soleSurvivor", castaway: "c1" }] },
       ],
     }),
   );

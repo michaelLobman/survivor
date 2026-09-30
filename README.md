@@ -35,7 +35,7 @@ node tests/scoring.test.js
 4. Open `public/index.html` locally to eyeball the results.
 5. Commit and push. The live site updates in about a minute.
 
-Leave a player out of `picks` to carry over their previous pick.
+A player left out of `picks` scores zero that week (picks don't carry over).
 
 ### Events
 Enter events **in the order they happened**. Order matters: tribe events

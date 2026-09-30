@@ -50,9 +50,9 @@
 
   app.innerHTML = `${UI.errorsHtml()}
     <div class="d-flex justify-content-between align-items-baseline mb-2">
-      <h1 class="section-title">Still in the game</h1>
-      <span class="eyebrow">${inGame.length} left</span>
+      <h1 class="section-title">Remaining</h1>
+      <span class="eyebrow">${inGame.length} castaways</span>
     </div>
     <div class="row g-2 mb-4 align-items-start">${inGame.map(card).join("")}</div>
-    ${out.length ? `<h2 class="section-title mb-2">Out</h2><div class="row g-2 align-items-start">${out.map(card).join("")}</div>` : ""}`;
+    ${out.length ? `<h2 class="section-title mb-2">Eliminated</h2><div class="row g-2 align-items-start">${out.map(card).join("")}</div>` : ""}`;
 })();

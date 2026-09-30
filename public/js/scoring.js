@@ -93,7 +93,6 @@
 
     const active = new Set(league.castaways.map((c) => c.id));
     const eliminatedIn = {};
-    const lastPick = {};
     let individualGame = false;
     let winner = null;
     let finaleIndex = null;
@@ -122,7 +121,7 @@
         timeline: [],
       };
 
-      // Picks: explicit this week, else carry over last pick if still in the game.
+      // Picks: only what was entered this week. A missed pick scores zero.
       const explicit = ep.picks || {};
       for (const pid of Object.keys(explicit)) {
         if (!playerIds.includes(pid)) errors.push(`${where}: unknown player "${pid}" in picks`);
@@ -136,10 +135,7 @@
             continue;
           }
           if (!active.has(cid)) errors.push(`${where}: ${pid} picked "${cid}", who is already out`);
-          result.picks[pid] = { castaway: cid, carried: false };
-          lastPick[pid] = cid;
-        } else if (lastPick[pid] && active.has(lastPick[pid])) {
-          result.picks[pid] = { castaway: lastPick[pid], carried: true };
+          result.picks[pid] = { castaway: cid };
         } else {
           result.picks[pid] = null;
         }

@@ -77,7 +77,7 @@ const UI = (() => {
     return `${minutes}m`;
   }
 
-  // One line of an itemized breakdown, e.g. "Immunity (Individual game ×2)   +20",
+  // One line of an itemized breakdown, e.g. "Immunity Individual game ×2   +20",
   // with the multiplier in muted italics.
   function breakdownItem(item) {
     let detail = "";
@@ -85,15 +85,15 @@ const UI = (() => {
     else if (item.weight === "late" || item.weight === "early") {
       detail = `${Scoring.PHASES[item.phase].label} ×${item.multiplier}`;
     }
-    const multiplier = detail ? ` <em class="multiplier">(${esc(detail)})</em>` : "";
+    const multiplier = detail ? ` <em class="multiplier">${esc(detail)}</em>` : "";
     return `<li><span>${esc(item.label)}${multiplier}</span>${pointsHtml(item.points)}</li>`;
   }
 
   // A player's pick: the castaway's face and name on an orange-tinted chip.
-  function pickChip(pick, size = 32) {
+  // `quiet` drops the orange where another element is the page's highlight.
+  function pickChip(pick, size = 32, { quiet = false } = {}) {
     if (!pick) return `<span class="pick-chip is-empty">No pick</span>`;
-    const carried = pick.carried ? `<span class="pick-chip-note">carried over</span>` : "";
-    return `<span class="pick-chip">${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span>${carried}</span>`;
+    return `<span class="pick-chip${quiet ? " is-quiet" : ""}">${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span></span>`;
   }
 
   // Every link to an episode looks the same: orange text with a chevron.

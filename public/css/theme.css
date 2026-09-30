@@ -62,15 +62,15 @@ h1,
   font-style: italic;
   font-weight: 500;
 }
+/* All pages must fit at phone width; wrap rather than hide one off-screen. */
 .site-nav {
-  gap: 0.25rem;
-  flex-wrap: nowrap;
-  overflow-x: auto;
+  gap: 0.15rem;
+  flex-wrap: wrap;
 }
 .site-nav .nav-link {
   color: var(--muted);
-  font-size: 0.9rem;
-  padding: 0.35rem 0.85rem;
+  font-size: 0.84rem;
+  padding: 0.35rem 0.45rem;
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -84,6 +84,17 @@ h1,
 }
 
 /* Surfaces */
+.card.featured-card {
+  --bs-card-bg: var(--primary-soft);
+  border-color: rgba(255, 122, 69, 0.45);
+}
+.featured-label {
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 .card {
   --bs-card-bg: var(--surface);
   border-color: var(--bs-border-color);
@@ -172,6 +183,44 @@ h1,
   color: var(--muted);
 }
 
+/* Player cards (home standings) */
+.pick-line {
+  display: grid;
+  grid-template-columns: 4.5rem auto auto;
+  justify-content: start;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+.player-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 0.5rem;
+}
+.player-stat {
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+}
+.history-row {
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--bs-border-color);
+}
+.history-row:first-child {
+  border-top: 0;
+}
+.history-ep {
+  width: 3rem;
+  flex-shrink: 0;
+}
+.history-breakdown {
+  padding-left: 4rem;
+}
+.chevron-spacer {
+  width: 1rem;
+  flex-shrink: 0;
+}
+
 /* Itemized breakdowns */
 .breakdown {
   font-size: 0.85rem;
@@ -187,9 +236,53 @@ h1,
   padding: 0.2rem 0;
 }
 
+/* Segmented switch (e.g. Players | Castaways) */
+.segmented {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: var(--surface);
+}
+.segmented-option {
+  padding: 0.3rem 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.segmented-option.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+/* Previous / next episode buttons */
+.ep-step {
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  text-decoration: none;
+}
+a.ep-step:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.ep-step.is-disabled {
+  opacity: 0.3;
+}
+
 /* Pick chip: the one highlight color for what a player picked */
 .pick-chip {
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0.2rem 0.75rem 0.2rem 0.2rem;
@@ -201,9 +294,13 @@ h1,
   color: var(--primary);
   font-weight: 600;
 }
-.pick-chip-note {
-  color: var(--muted);
-  font-size: 0.75rem;
+.pick-chip.is-quiet {
+  border-color: transparent;
+  background: var(--surface-raised);
+}
+.pick-chip.is-quiet .pick-chip-name {
+  color: var(--ink);
+  font-weight: 500;
 }
 .pick-chip.is-empty {
   padding: 0.25rem 0.75rem;

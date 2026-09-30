@@ -1,4 +1,4 @@
-// Episodes: an episode dashboard, every player's itemized points, and all castaway scores.
+// Episodes: an episode dashboard, then player and castaway scores (switchable, expandable).
 (() => {
   const { season, esc } = UI;
   const app = document.getElementById("app");
@@ -79,8 +79,8 @@
         const voted = ev.type === "votedOut";
         const votes = tally[id] || { votes: 0, points: 0 };
         const parts = [];
-        if (votes.votes) parts.push(`${plural(votes.votes, "vote")} <em class="multiplier">(${UI.points(votes.points)})</em>`);
-        if (voted) parts.push(`voted out <em class="multiplier">(${UI.points(ev.points)})</em>`);
+        if (votes.votes) parts.push(`${plural(votes.votes, "vote")} <em class="multiplier">${UI.points(votes.points)}</em>`);
+        if (voted) parts.push(`voted out <em class="multiplier">${UI.points(ev.points)}</em>`);
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
           <span class="is-out-photo">${UI.avatar(id, 64)}</span>
@@ -100,7 +100,7 @@
       events.length ? `<div class="col-12 col-sm-6"><div class="eyebrow mb-1">${label}</div>${list(events.map(winners))}</div>` : "";
     const cols =
       column("Reward", ofType("reward")) +
-      column("Chosen for reward", ofType("rewardGuest")) +
+      column("Reward guests", ofType("rewardGuest")) +
       column("Immunity", ofType("immunity"));
     return cols ? `<div class="dash-section"><div class="row g-3">${cols}</div></div>` : "";
   }
@@ -122,7 +122,7 @@
         ),
       ),
     );
-    return section("Tribal council votes", list([...votes, ...idols]));
+    return section("Tribal council", list([...votes, ...idols]));
   }
 
   function peopleSection(label, types) {
@@ -139,70 +139,113 @@
         "",
       ),
     );
-    return section("Tribe moves", list(moves));
+    return section("Tribe changes", list(moves));
+  }
+
+  // ‹ › buttons to step between episodes; disabled at either end.
+  function stepper() {
+    const index = completed.indexOf(episode);
+    const step = (target, symbol, label) =>
+      target
+        ? `<a class="ep-step" href="?ep=${target.number}" aria-label="${label}: Episode ${target.number}">${symbol}</a>`
+        : `<span class="ep-step is-disabled" aria-hidden="true">${symbol}</span>`;
+    return `<div class="d-flex gap-2 flex-shrink-0">${step(completed[index - 1], "‹", "Previous")}${step(completed[index + 1], "›", "Next")}</div>`;
   }
 
   function dashboard() {
     return `<section class="card mb-4 episode-dashboard"><div class="card-body">
-      <div class="eyebrow">Episode ${episode.number} · ${episode.remainingAtLock} castaways at lock</div>
-      <h1 class="h5 mt-1 mb-0">${esc(episode.title || `Episode ${episode.number}`)}</h1>
+      <div class="d-flex align-items-start justify-content-between gap-3">
+        <div>
+          <div class="eyebrow">Episode ${episode.number} · ${episode.remainingAtLock} castaways at lock</div>
+          <h1 class="h5 mt-1 mb-0">${esc(episode.title || `Episode ${episode.number}`)}</h1>
+        </div>
+        ${stepper()}
+      </div>
       ${peopleSection("Sole Survivor", ["soleSurvivor"])}
       ${bootsSection()}
       ${challengesSection()}
       ${tribalSection()}
-      ${peopleSection("Found advantage", ["advantage"])}
+      ${peopleSection("Advantages found", ["advantage"])}
       ${movesSection()}
-      ${ofType("individualGame").length ? section("Game update", `<span class="small">The individual game begins.</span>`) : ""}
+      ${ofType("individualGame").length ? section("Phase change", `<span class="small">The individual game begins.</span>`) : ""}
     </div></section>`;
   }
 
-  function playerCards() {
+  // One expandable score row: summary on top, itemized points inside.
+  function scoreCard({ summary, score, extraClass = "" }) {
+    if (score.items.length === 0) {
+      return `<div class="card mb-2${extraClass}"><div class="card-body d-flex align-items-center gap-3">${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron-spacer"></span></div></div>`;
+    }
+    return `<details class="card expandable mb-2${extraClass}">
+      <summary class="card-body d-flex align-items-center gap-3">
+        ${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron" aria-hidden="true">›</span>
+      </summary>
+      <div class="card-body pt-0"><ul class="list-unstyled breakdown mb-0">${score.items.map(UI.breakdownItem).join("")}</ul></div>
+    </details>`;
+  }
+
+  // Players ranked by this episode's points, each with their pick.
+  function playerScores() {
     return LEAGUE.players
       .map((p) => ({ player: p, pick: episode.picks[p.id], score: episode.playerPoints[p.id] }))
       .sort((a, b) => b.score.total - a.score.total)
-      .map(({ player, pick, score }) => {
-        const items = score.items.map(UI.breakdownItem).join("");
-        return `<div class="card mb-2"><div class="card-body py-3">
-          <div class="d-flex justify-content-between align-items-center gap-2">
-            <span class="fw-semibold">${esc(player.name)}</span>
-            ${UI.pointsHtml(score.total, "fw-semibold")}
-          </div>
-          <div class="mt-2">${UI.pickChip(pick, 36)}</div>
-          ${items ? `<ul class="list-unstyled breakdown mt-2 mb-0">${items}</ul>` : ""}
-        </div></div>`;
-      })
+      .map(({ player, pick, score }) =>
+        scoreCard({
+          score,
+          summary: `<div class="flex-grow-1 min-w-0">
+            <div class="fw-semibold">${esc(player.name)}</div>
+            <div class="mt-1">${UI.pickChip(pick, 28)}</div>
+          </div>`,
+        }),
+      )
       .join("");
   }
 
-  // Each castaway row expands to show the events behind their score.
+  // Every castaway's points this episode, whether or not anyone picked them.
   function castawayScores() {
-    const rows = Object.entries(episode.castawayPoints)
+    return Object.entries(episode.castawayPoints)
       .sort(([, a], [, b]) => b.total - a.total)
-      .map(
-        ([id, score]) => `<li class="list-group-item">
-          <details class="expandable">
-            <summary class="d-flex align-items-center gap-2">
-              ${UI.avatar(id, 36)}<span class="flex-grow-1">${esc(UI.shortName(id))}</span>${UI.pointsHtml(score.total)}
-              <span class="chevron" aria-hidden="true">›</span>
-            </summary>
-            <ul class="list-unstyled breakdown mt-2 mb-1 ps-5 pe-4">${score.items.map(UI.breakdownItem).join("")}</ul>
-          </details>
-        </li>`,
+      .map(([id, score]) =>
+        scoreCard({
+          score,
+          summary: `<span class="flex-grow-1 d-flex align-items-center gap-3">${UI.avatar(id, 36)}<span class="fw-semibold">${esc(UI.shortName(id))}</span></span>`,
+        }),
       )
       .join("");
-    return `<details class="expandable mt-4">
-      <summary class="d-flex align-items-center gap-2 mb-2">
-        <span class="section-title flex-grow-1">Every castaway's score this episode</span>
-        <span class="chevron" aria-hidden="true">›</span>
-      </summary>
-      <ul class="card list-group list-group-flush small">${rows}</ul>
-    </details>`;
+  }
+
+  // Players | Castaways switch: one scores section, two views.
+  function scoresSection() {
+    return `<div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="section-title">Scores</h2>
+        <div class="segmented" role="tablist" aria-label="Show scores for">
+          <button type="button" class="segmented-option active" role="tab" aria-selected="true" data-view="players">Players</button>
+          <button type="button" class="segmented-option" role="tab" aria-selected="false" data-view="castaways">Castaways</button>
+        </div>
+      </div>
+      <div data-scores="players">${playerScores()}</div>
+      <div data-scores="castaways" hidden>${castawayScores()}</div>`;
   }
 
   app.innerHTML = `${UI.errorsHtml()}
     <nav class="ep-pills mb-3" aria-label="Choose an episode">${pills}</nav>
     ${dashboard()}
-    <h2 class="section-title mb-2">League picks</h2>
-    ${playerCards()}
-    ${castawayScores()}`;
+    ${scoresSection()}`;
+
+  document.querySelectorAll(".segmented-option").forEach((button) =>
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".segmented-option").forEach((b) => {
+        const selected = b === button;
+        b.classList.toggle("active", selected);
+        b.setAttribute("aria-selected", String(selected));
+      });
+      document.querySelectorAll("[data-scores]").forEach((list) => {
+        list.hidden = list.dataset.scores !== button.dataset.view;
+      });
+    }),
+  );
+
+  // Late in the season the picker is wider than the screen; bring the current episode into view.
+  const activePill = document.querySelector(".ep-pill.active");
+  if (activePill) activePill.scrollIntoView({ block: "nearest", inline: "center" });
 })();

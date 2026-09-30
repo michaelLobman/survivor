@@ -53,9 +53,8 @@ averaged 338; a random picker averaged 224.
 - **Deadline:** picks lock at the episode's East Coast air time. The app shows a
   countdown in each player's local time. Schedule changes are handled by the
   admin editing the episode's air time.
-- **Missed pick:** the player's previous pick carries over if that castaway is
-  still in the game; otherwise the player scores zero that week. Carried-over
-  picks count toward the Sole Survivor bonus.
+- **Missed pick:** the player scores zero that week. Picks don't carry over
+  (changed from the original carryover rule).
 - **Visibility:** a player always sees their own pick; everyone's picks are
   revealed when the episode locks. (V1 shows picks as soon as they're entered;
   hiding until lock returns with accounts in V2.)
@@ -117,7 +116,7 @@ A read-only site the admin updates by hand, to be live within a day or two.
 - **Data:** JS data files in the repo (castaways, tribes, episodes). Each week
   the admin adds that episode's picks and events, commits, and pushes.
 - **Admin enters events; the code scores.** Multipliers, survived points,
-  carryover picks, and the Sole Survivor bonus are all computed. Final 5 is
+  and the Sole Survivor bonus are all computed. Final 5 is
   derived from the castaway count; the switch to the individual game is a
   one-line `individualGame` marker the admin adds at the right point (more
   reliable than guessing from the data). Any event can override its phase.

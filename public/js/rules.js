@@ -18,12 +18,12 @@
     .join("");
 
   app.innerHTML = `
-    <h1 class="h5">How scoring works</h1>
+    <h1 class="h5">Scoring</h1>
     <p class="text-body-secondary small">
       Each week, pick one castaway. You score whatever they do that episode. Picks can repeat, and anyone can pick the same castaway.
     </p>
 
-    <h2 class="section-title mt-4 mb-2">Game phases</h2>
+    <h2 class="section-title mt-4 mb-2">Phases</h2>
     <ul class="small">
       <li><strong>Tribe game:</strong> immunity is won by tribes.</li>
       <li><strong>Individual game:</strong> immunity is won by individuals, 6 or more castaways left.</li>
@@ -40,7 +40,7 @@
 
     <div class="card mb-4"><div class="table-responsive">
       <table class="table table-sm mb-0 small align-middle">
-        <thead><tr><th>Any phase</th><th class="text-end">Points</th></tr></thead>
+        <thead><tr><th>Flat events</th><th class="text-end">Points</th></tr></thead>
         <tbody>${flatRows}</tbody>
       </table>
     </div></div>
@@ -51,10 +51,10 @@
       for each castaway still in the game when that week's picks locked. Backing the winner early pays the most.
     </p>
 
-    <h2 class="section-title mb-2">Picks</h2>
+    <h2 class="section-title mb-2">Pick rules</h2>
     <ul class="small">
       <li>Picks lock when the episode starts airing (8 PM ET).</li>
-      <li>No pick? Your previous pick carries over, as long as that castaway is still in the game.</li>
+      <li>No pick means no points that week. Picks don't carry over.</li>
       <li>Everyone's picks are visible as soon as they're in.</li>
       <li>Final ties go to whoever picked the winner more often, then the best single episode.</li>
     </ul>`;
