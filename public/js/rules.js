@@ -33,7 +33,7 @@
 
     <div class="card mb-4"><div class="table-responsive">
       <table class="table table-sm mb-0 small align-middle">
-        <thead><tr><th>Event</th>${phaseKeys.map((k) => `<th class="text-end">${PHASES[k].label}</th>`).join("")}</tr></thead>
+        <thead><tr><th>Event</th>${phaseKeys.map((k) => `<th class="text-end text-nowrap">${PHASES[k].short}</th>`).join("")}</tr></thead>
         <tbody>${tieredRows}</tbody>
       </table>
     </div></div>

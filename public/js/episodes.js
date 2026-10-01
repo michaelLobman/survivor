@@ -31,7 +31,7 @@
       ${step(completed[index - 1], "‹", "Previous")}
       <details class="ep-menu flex-grow-1">
         <summary class="text-center">
-          <div class="eyebrow">Episode ${episode.number} · ${episode.remainingAtLock} castaways</div>
+          <span class="d-block eyebrow">Episode ${episode.number} · ${episode.remainingAtLock} castaways</span>
           <h1 class="ep-switcher-title">${esc(episode.title || `Episode ${episode.number}`)} <span class="ep-menu-caret" aria-hidden="true">▾</span></h1>
         </summary>
         <ul class="ep-menu-list list-unstyled">${options}</ul>
@@ -232,10 +232,10 @@
       .map(({ player, pick, score }) =>
         scoreCard({
           score,
-          summary: `<div class="flex-grow-1 min-w-0">
-            <div class="fw-semibold">${esc(player.name)}</div>
-            <div class="mt-1">${UI.pickChip(pick, 28)}</div>
-          </div>`,
+          summary: `<span class="flex-grow-1 min-w-0">
+            <span class="d-block fw-semibold">${esc(player.name)}</span>
+            <span class="d-block mt-1">${UI.pickChip(pick, 28)}</span>
+          </span>`,
         }),
       )
       .join("");

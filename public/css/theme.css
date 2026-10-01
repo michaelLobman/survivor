@@ -13,6 +13,7 @@
   --bs-border-color: #2a2a2f;
   --bs-border-radius: 0.75rem;
   --bs-border-radius-lg: 1rem;
+  --card-radius: 1rem;
   --surface: #17171a;
   --surface-raised: #202024;
   --ink: #ececee;
@@ -97,7 +98,7 @@ h1,
 .card {
   --bs-card-bg: var(--surface);
   border-color: var(--bs-border-color);
-  border-radius: 1rem;
+  border-radius: var(--card-radius);
 }
 .list-group {
   --bs-list-group-bg: var(--surface);
@@ -109,6 +110,18 @@ h1,
 /* Tables inside rounded cards: keep text clear of the curved corners. */
 .card .table > :not(caption) > * > * {
   padding: 0.65rem 1rem;
+}
+/* Phones: tighter inner columns so event names fit; outer cells keep clear of the corners. */
+@media (max-width: 575.98px) {
+  .card .table > :not(caption) > * > * {
+    padding-inline: 0.4rem;
+  }
+  .card .table > :not(caption) > * > :first-child {
+    padding-left: 1rem;
+  }
+  .card .table > :not(caption) > * > :last-child {
+    padding-right: 1rem;
+  }
 }
 .section-title {
   font-size: 1.1rem;
@@ -272,8 +285,8 @@ h1,
 .ep-step {
   display: inline-grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem; /* 44px: comfortable tap target */
+  height: 2.75rem;
   border: 1px solid var(--bs-border-color);
   border-radius: 50%;
   color: var(--ink);
@@ -489,4 +502,38 @@ a.ep-step:hover {
 }
 .facepile .avatar {
   border: 2px solid var(--surface);
+}
+
+/* Keyboard focus: one visible ring on everything interactive (mouse clicks don't show it). */
+:where(a, button, summary):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+/* Rounded cards: the ring follows the card's corners. (Not `inherit`: Chrome slots a
+   <summary> inside its <details>, so it would inherit the slot's square corners.) */
+.card > summary {
+  border-radius: var(--card-radius);
+}
+
+/* Small pill controls keep their look but get a taller invisible tap area. */
+.ep-link,
+.site-nav .nav-link,
+.segmented-option {
+  position: relative;
+}
+.ep-link::after,
+.site-nav .nav-link::after,
+.segmented-option::after {
+  content: "";
+  position: absolute;
+  inset: -0.5rem 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

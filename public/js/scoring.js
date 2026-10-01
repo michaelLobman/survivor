@@ -16,9 +16,9 @@
 
   // Late-weighted events grow as the game tightens; early-weighted ones shrink.
   const PHASES = {
-    tribe: { label: "Tribe game", late: 1, early: 3 },
-    individual: { label: "Individual game", late: 2, early: 2 },
-    final5: { label: "Final 5", late: 3, early: 1 },
+    tribe: { label: "Tribe game", short: "Tribe", late: 1, early: 3 },
+    individual: { label: "Individual game", short: "Individual", late: 2, early: 2 },
+    final5: { label: "Final 5", short: "Final 5", late: 3, early: 1 },
   };
   const FINAL_PHASE_SIZE = 5;
 

@@ -27,14 +27,14 @@
       <details class="card expandable${stats.active ? "" : " is-out"}">
         <summary class="card-body d-flex gap-3 align-items-center">
           ${UI.avatar(c.id, 80)}
-          <div class="flex-grow-1 min-w-0">
-            <div class="fw-semibold text-truncate">${esc(c.name)}</div>
-            <div class="d-flex flex-wrap align-items-center gap-2 mt-1">${UI.tribeBadge(stats.tribe)} ${status}</div>
-            <div class="eyebrow mt-1">
+          <span class="flex-grow-1 min-w-0">
+            <span class="d-block fw-semibold text-truncate">${esc(c.name)}</span>
+            <span class="d-flex flex-wrap align-items-center gap-2 mt-1">${UI.tribeBadge(stats.tribe)} ${status}</span>
+            <span class="d-block eyebrow mt-1">
               ${UI.pointsHtml(stats.seasonPoints)} season pts ·
               picked ${stats.timesPicked} ${stats.timesPicked === 1 ? "time" : "times"}
-            </div>
-          </div>
+            </span>
+          </span>
           <span class="chevron" aria-hidden="true">›</span>
         </summary>
         <div class="card-body pt-0">${seasonBreakdown(c.id)}</div>

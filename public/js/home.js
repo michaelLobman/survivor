@@ -240,7 +240,8 @@
   }
 
   function standings() {
-    const after = leagueStarted ? UI.episodeLink(lastCompleted.number, `After Episode ${lastCompleted.number}`) : "";
+    // A label, not a link: the top scorers card already links to the episode.
+    const after = leagueStarted ? `<span class="eyebrow">After Episode ${lastCompleted.number}</span>` : "";
     const firstScored = next ? `Episode ${next.number} is` : "the first episode is";
     const notStarted = leagueStarted ? "" : `<p class="small text-body-secondary mb-2">Standings start once ${firstScored} scored.</p>`;
     return `<div class="d-flex justify-content-between align-items-baseline mb-2">
