@@ -154,9 +154,11 @@
     return `<div class="player-stats">${cells.join("")}</div>`;
   }
 
+  // Castaways picked more than once; a single pick is already in the pick history.
   function favoritesSection(stats) {
-    if (stats.favorites.length === 0) return "";
-    const chips = stats.favorites
+    const repeats = stats.favorites.filter((f) => f.count > 1);
+    if (repeats.length === 0) return "";
+    const chips = repeats
       .map(
         (f) => `<span class="d-inline-flex align-items-center gap-2">${UI.pickChip({ castaway: f.id }, 28, { ...QUIET, link: true })}
           <span class="small text-nowrap">×${f.count} ${UI.pointsHtml(f.points)}</span></span>`,
