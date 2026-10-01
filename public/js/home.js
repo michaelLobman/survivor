@@ -141,7 +141,7 @@
     const chips = stats.favorites
       .map(
         (f) => `<span class="d-inline-flex align-items-center gap-2">${UI.pickChip({ castaway: f.id }, 28, QUIET)}
-          <span class="small text-nowrap">×${f.count} <em>${UI.pointsHtml(f.points)}</em></span></span>`,
+          <span class="small text-nowrap">×${f.count} ${UI.pointsHtml(f.points)}</span></span>`,
       )
       .join("");
     return `<div class="mt-3"><div class="eyebrow mb-2">Most picked</div><div class="d-flex flex-wrap gap-3">${chips}</div></div>`;

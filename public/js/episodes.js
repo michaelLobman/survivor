@@ -125,8 +125,8 @@
         const voted = ev.type === "votedOut";
         const votes = tally[id] || { votes: 0, points: 0 };
         const parts = [];
-        if (votes.votes) parts.push(`${plural(votes.votes, "vote")} <em>${UI.pointsHtml(votes.points)}</em>`);
-        if (voted) parts.push(`voted out <em>${UI.pointsHtml(ev.points)}</em>`);
+        if (votes.votes) parts.push(`${plural(votes.votes, "vote")} ${UI.pointsHtml(votes.points)}`);
+        if (voted) parts.push(`voted out ${UI.pointsHtml(ev.points)}`);
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
           <span class="is-out">${UI.avatar(id, 64)}</span>
@@ -255,7 +255,23 @@
   }
 
   // Players | Castaways switch: one scores section, two views.
+  // Episodes before the league started (or that nobody picked) have no player scores,
+  // so they show castaway scores alone with a note instead of an empty Players list.
+  const anyPicks = Object.values(episode.picks).some(Boolean);
+
+  function noPicksNote() {
+    const firstPicked = season.episodes.find((e) => Object.values(e.picks).some(Boolean));
+    return firstPicked && firstPicked.number > episode.number
+      ? `Picks begin in Episode ${firstPicked.number}.`
+      : "Nobody picked this episode.";
+  }
+
   function scoresSection() {
+    if (!anyPicks) {
+      return `<h2 class="section-title mb-1">Castaway scores</h2>
+        <p class="small text-body-secondary mb-2">${noPicksNote()}</p>
+        ${castawayScores()}`;
+    }
     return `<div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="section-title">Scores</h2>
         <div class="segmented" role="group" aria-label="Show scores for">

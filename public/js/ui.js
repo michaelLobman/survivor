@@ -23,9 +23,10 @@ const UI = (() => {
     return "0";
   }
 
+  // Every point value on the site goes through here, so they all look the same.
   function pointsHtml(n, extraClass = "") {
     const tone = n > 0 ? "pts-pos" : n < 0 ? "pts-neg" : "pts-zero";
-    return `<span class="tabular ${tone} ${extraClass}">${points(n)}</span>`;
+    return `<span class="pts tabular ${tone} ${extraClass}">${points(n)}</span>`;
   }
 
   // Dark text on light tribe colors (Toka yellow), white on dark (Savu purple).
