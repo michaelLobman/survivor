@@ -44,7 +44,8 @@
   const timeline = episode.timeline;
   const ofType = (...types) => timeline.filter((ev) => types.includes(ev.type));
 
-  function person(id, size = 36) {
+  const PERSON_SIZE = 36;
+  function person(id, size = PERSON_SIZE) {
     return `<span class="d-inline-flex align-items-center gap-2">${UI.avatar(id, size)}<span>${esc(UI.shortName(id))}</span></span>`;
   }
 
@@ -57,17 +58,44 @@
     return `<span class="text-nowrap">${UI.pointsHtml(ev.points, "fw-semibold")}${each}</span>`;
   }
 
-  // A left/right row: who (and what) on the left, points on the right.
-  function row(left, right) {
-    return `<li class="d-flex align-items-center justify-content-between gap-3 py-1">${left}${right}</li>`;
+  // A left/right row: who (and what) on the left, points on the right. The right side is
+  // centered on the first line (one face tall), so it stays put when names wrap.
+  function row(left, right, faceSize = PERSON_SIZE) {
+    return `<li class="dash-row py-1" style="--face-size:${faceSize}px">${left}<span class="dash-row-end">${right}</span></li>`;
   }
 
-  // A tribe win shows the tribe plus overlapping faces of everyone it credited.
-  function winners(ev) {
-    const who = ev.tribe
-      ? `<span class="d-flex flex-wrap align-items-center gap-2">${UI.tribeBadge(ev.tribe)}<span class="avatar-stack">${ev.castaways.map((id) => UI.avatar(id, 32, { named: true })).join("")}</span></span>`
-      : `<span class="d-flex flex-wrap gap-3">${ev.castaways.map((id) => person(id)).join("")}</span>`;
-    return row(who, eventPoints(ev));
+  // Overlapping faces on one line, however many there are. Each column is at most
+  // FACE_STEP wide and shrinks when space runs short, so faces overlap more instead of wrapping.
+  const FACE_SIZE = 32;
+  const FACE_STEP = 24;
+  function facepile(ids) {
+    const overlapped = ids.length > 1 ? `repeat(${ids.length - 1}, minmax(0, ${FACE_STEP}px)) ` : "";
+    const columns = `${overlapped}${FACE_SIZE}px`;
+    return `<span class="facepile" style="grid-template-columns:${columns}">${ids.map((id) => UI.avatar(id, FACE_SIZE, { named: true })).join("")}</span>`;
+  }
+
+  // A few people by name; past that, faces only, so a whole tribe fits on one line.
+  const MAX_NAMED = 3;
+  function people(ids) {
+    if (ids.length > MAX_NAMED) return facepile(ids);
+    return `<span class="d-flex flex-wrap gap-3">${ids.map((id) => person(id)).join("")}</span>`;
+  }
+
+  // A group row: a heading line (e.g. the tribe) with points, and the people below.
+  function groupRow(head, right, ids) {
+    return `<li>
+      <div class="d-flex align-items-center justify-content-between gap-3">${head}${right}</div>
+      <div class="mt-2">${people(ids)}</div>
+    </li>`;
+  }
+
+  const groupList = (rows) => (rows.length ? `<ul class="list-unstyled mb-0 group-list">${rows.join("")}</ul>` : "");
+
+  // A tribe win lists everyone it credited under the tribe. An individual win reads
+  // like the other dashboard rows: names left, points right.
+  function challengeRow(ev) {
+    if (ev.tribe) return groupRow(UI.tribeBadge(ev.tribe), eventPoints(ev), ev.castaways);
+    return row(people(ev.castaways), eventPoints(ev));
   }
 
   function section(label, body) {
@@ -113,14 +141,16 @@
       .join("");
   }
 
-  function challengesSection() {
-    const column = (label, events) =>
-      events.length ? `<div class="col-12 col-sm-6"><div class="eyebrow mb-1">${label}</div>${list(events.map(winners))}</div>` : "";
-    const cols =
-      column("Reward", ofType("reward")) +
-      column("Reward guests", ofType("rewardGuest")) +
-      column("Immunity", ofType("immunity"));
-    return cols ? `<div class="dash-section"><div class="row g-3">${cols}</div></div>` : "";
+  // One section per challenge type, each win its own row (in show order within a type).
+  const CHALLENGE_TYPES = [
+    ["reward", "Reward"],
+    ["rewardGuest", "Chosen for reward"],
+    ["immunity", "Immunity"],
+  ];
+  function challengeSections() {
+    return CHALLENGE_TYPES.map(([type, label]) => {
+      return section(label, groupList(ofType(type).map(challengeRow)));
+    }).join("");
   }
 
   function tribalSection() {
@@ -130,6 +160,7 @@
         row(
           person(id, 32),
           `<span class="text-nowrap small">${plural(t.votes, "vote")} ${UI.pointsHtml(t.points, "fw-semibold ms-2")}</span>`,
+          32,
         ),
       );
     const idols = ofType("idolCancel").flatMap((ev) =>
@@ -137,6 +168,7 @@
         row(
           person(id, 32),
           `<span class="text-nowrap small">Idol · ${plural(ev.count, "vote")} cancelled ${UI.pointsHtml(ev.points, "fw-semibold ms-2")}</span>`,
+          32,
         ),
       ),
     );
@@ -150,23 +182,28 @@
     return section(label, list(rows));
   }
 
+  // Moves grouped by destination: one person reads "Lewis → Toka"; a swap reads
+  // "Moved to Toka" with everyone below.
   function movesSection() {
-    const moves = ofType("moveTribe").flatMap((ev) =>
-      ev.castaways.map((id) =>
-        row(
-          `<span class="d-flex align-items-center gap-2">${person(id)}<span class="text-body-secondary">→</span>${UI.tribeBadge(ev.tribe)}</span>`,
+    const byTribe = new Map();
+    ofType("moveTribe").forEach((ev) => byTribe.set(ev.tribe, [...(byTribe.get(ev.tribe) || []), ...ev.castaways]));
+    const rows = [...byTribe].map(([tribe, ids]) => {
+      if (ids.length === 1) {
+        return row(
+          `<span class="d-flex align-items-center gap-2">${person(ids[0])}<span class="text-body-secondary" aria-hidden="true">→</span><span class="visually-hidden">moved to</span>${UI.tribeBadge(tribe)}</span>`,
           "",
-        ),
-      ),
-    );
-    return section("Tribe changes", list(moves));
+        );
+      }
+      return groupRow(`<span class="d-flex align-items-center gap-2"><span class="text-body-secondary">Moved to</span>${UI.tribeBadge(tribe)}</span>`, "", ids);
+    });
+    return section("Tribe changes", groupList(rows));
   }
 
   function dashboard() {
     return `<section class="card mb-4 episode-dashboard"><div class="card-body">
       ${peopleSection("Sole Survivor", ["soleSurvivor"])}
       ${bootsSection()}
-      ${challengesSection()}
+      ${challengeSections()}
       ${tribalSection()}
       ${peopleSection("Advantages found", ["advantage"])}
       ${movesSection()}

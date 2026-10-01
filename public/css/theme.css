@@ -447,12 +447,30 @@ a.ep-step:hover {
   font-size: 1.15rem;
   font-weight: 600;
 }
-.avatar-stack {
-  display: inline-flex;
-  flex-wrap: wrap;
-  padding-left: 8px;
+/* Dashboard rows: points centered on the first line (one face tall) even when names wrap. */
+.dash-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
 }
-.avatar-stack .avatar {
-  margin-left: -8px;
+.dash-row-end {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  min-height: var(--face-size);
+}
+/* Lists of group rows (tribe wins, swaps) need more air than single-line rows. */
+.group-list {
+  display: grid;
+  gap: 0.75rem;
+}
+/* Overlapping faces: episodes.js sets the grid columns. Each face is wider than its
+   column and spills over the next; the surface-colored border separates them. */
+.facepile {
+  display: grid;
+  max-width: 100%;
+}
+.facepile .avatar {
   border: 2px solid var(--surface);
 }
