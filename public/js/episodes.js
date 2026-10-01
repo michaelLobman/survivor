@@ -45,9 +45,7 @@
   const ofType = (...types) => timeline.filter((ev) => types.includes(ev.type));
 
   const PERSON_SIZE = 36;
-  function person(id, size = PERSON_SIZE) {
-    return `<span class="d-inline-flex align-items-center gap-2">${UI.avatar(id, size)}<span>${esc(UI.shortName(id))}</span></span>`;
-  }
+  const person = (id, size = PERSON_SIZE) => UI.castawayPerson(id, size);
 
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
@@ -71,7 +69,8 @@
   function facepile(ids) {
     const overlapped = ids.length > 1 ? `repeat(${ids.length - 1}, minmax(0, ${FACE_STEP}px)) ` : "";
     const columns = `${overlapped}${FACE_SIZE}px`;
-    return `<span class="facepile" style="grid-template-columns:${columns}">${ids.map((id) => UI.avatar(id, FACE_SIZE, { named: true })).join("")}</span>`;
+    const faces = ids.map((id) => `<a class="facepile-face" href="${UI.castawayHref(id)}">${UI.avatar(id, FACE_SIZE, { named: true })}</a>`);
+    return `<span class="facepile" style="grid-template-columns:${columns}">${faces.join("")}</span>`;
   }
 
   // A few people by name; past that, faces only, so a whole tribe fits on one line.
@@ -129,10 +128,10 @@
         if (voted) parts.push(`voted out ${UI.pointsHtml(ev.points)}`);
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
-          <span class="is-out">${UI.avatar(id, 64)}</span>
+          <a class="is-out" href="${UI.castawayHref(id)}" tabindex="-1" aria-hidden="true">${UI.avatar(id, 64)}</a>
           <div class="flex-grow-1">
             <div class="eyebrow">${voted ? "Voted out" : "Left the game"}</div>
-            <div class="dash-name">${esc(UI.castawayById.get(id).name)}</div>
+            <a class="dash-name castaway-link" href="${UI.castawayHref(id)}">${esc(UI.castawayById.get(id).name)}</a>
             <div class="small">${parts.join(" · ") || "No points either way"}</div>
           </div>
           ${total === null ? "" : UI.pointsHtml(total, "fs-5 fw-semibold")}
@@ -240,7 +239,8 @@
   }
 
   // One expandable score row: summary on top, itemized points inside.
-  function scoreCard({ summary, score, extraClass = "" }) {
+  // `castawayId` adds a link to that castaway's page under the breakdown.
+  function scoreCard({ summary, score, castawayId = null, extraClass = "" }) {
     if (score.items.length === 0) {
       return `<div class="card mb-2${extraClass}"><div class="card-body d-flex align-items-center gap-3">${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron-spacer"></span></div></div>`;
     }
@@ -248,7 +248,10 @@
       <summary class="card-body d-flex align-items-center gap-3">
         ${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron" aria-hidden="true">›</span>
       </summary>
-      <div class="card-body pt-0"><ul class="list-unstyled breakdown mb-0">${score.items.map(UI.breakdownItem).join("")}</ul></div>
+      <div class="card-body pt-0">
+        <ul class="list-unstyled breakdown mb-0">${score.items.map(UI.breakdownItem).join("")}</ul>
+        ${castawayId ? `<div class="mt-2">${UI.castawayLink(castawayId)}</div>` : ""}
+      </div>
     </details>`;
   }
 
@@ -260,6 +263,7 @@
       .map(({ player, pick, score }) =>
         scoreCard({
           score,
+          castawayId: pick?.castaway,
           summary: `<span class="flex-grow-1 min-w-0">
             <span class="d-block fw-semibold">${esc(player.name)}</span>
             <span class="d-block mt-1">${UI.pickChip(pick, 28)}</span>
@@ -276,6 +280,7 @@
       .map(([id, score]) =>
         scoreCard({
           score,
+          castawayId: id,
           summary: `<span class="flex-grow-1 d-flex align-items-center gap-3">${UI.avatar(id, 36)}<span class="fw-semibold">${esc(UI.shortName(id))}</span></span>`,
         }),
       )

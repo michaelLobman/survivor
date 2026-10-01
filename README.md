@@ -9,7 +9,8 @@ build step and no backend. Game design and scoring rules: [docs/DESIGN.md](docs/
 public/                 ← everything the website serves
   index.html            ← Standings (home)
   episodes.html         ← Episode dashboards and results (?ep=3 for a specific episode)
-  castaways.html        ← Castaway cards
+  castaways.html        ← Castaway photo grid
+  castaway.html         ← One castaway's page (?id=rob)
   rules.html            ← Scoring rules (generated from scoring.js)
   css/theme.css         ← Bootstrap overrides
   js/data.js            ← season data: the only file you edit weekly

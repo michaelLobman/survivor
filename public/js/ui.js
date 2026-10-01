@@ -8,6 +8,9 @@ const UI = (() => {
   const tribeById = new Map(LEAGUE.tribes.map((t) => [t.id, t]));
   const playerById = new Map(LEAGUE.players.map((p) => [p.id, p]));
 
+  // Every link to a castaway's page uses this address.
+  const castawayHref = (id) => `castaway.html?id=${encodeURIComponent(id)}`;
+
   function esc(value) {
     return String(value).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
   }
@@ -96,17 +99,42 @@ const UI = (() => {
 
   // A player's pick: the castaway's face and name on an orange-tinted chip.
   // `quiet` drops the orange where another element is the page's highlight;
-  // `points` adds what the pick scored, inside the chip so it reads as part of the pick.
-  function pickChip(pick, size = 32, { quiet = false, points = null } = {}) {
+  // `points` adds what the pick scored, inside the chip so it reads as part of the pick;
+  // `link` makes the chip open the castaway's page (not inside <summary>: one tap target per row).
+  function pickChip(pick, size = 32, { quiet = false, points = null, link = false } = {}) {
     if (!pick) return `<span class="pick-chip is-empty">No pick</span>`;
     const scored = points === null ? "" : `<span class="pick-chip-points">${pointsHtml(points)}</span>`;
-    return `<span class="pick-chip${quiet ? " is-quiet" : ""}">${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span>${scored}</span>`;
+    const tag = link ? `a href="${castawayHref(pick.castaway)}"` : "span";
+    const content = `${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span>${scored}`;
+    return `<${tag} class="pick-chip${quiet ? " is-quiet" : ""}">${content}</${link ? "a" : "span"}>`;
   }
 
-  // Every link to an episode looks the same: orange text with a chevron.
-  function episodeLink(number, label = `Episode ${number}`) {
-    return `<a class="ep-link" href="episodes.html?ep=${number}">${esc(label)}<span class="ep-link-arrow" aria-hidden="true">›</span></a>`;
+  // Small outlined buttons ("See episode ›"): one look for every link of this kind.
+  function pillLink(href, label) {
+    return `<a class="ep-link" href="${href}">${esc(label)}<span class="ep-link-arrow" aria-hidden="true">›</span></a>`;
   }
+
+  function episodeLink(number, label = `Episode ${number}`) {
+    return pillLink(`episodes.html?ep=${number}`, label);
+  }
+
+  function castawayLink(castawayId, label = `See ${shortName(castawayId)}`) {
+    return pillLink(castawayHref(castawayId), label);
+  }
+
+  // A castaway's face and short name, linking to their page. Not for use inside <summary>.
+  function castawayPerson(castawayId, size = 36) {
+    return `<a class="castaway-link d-inline-flex align-items-center gap-2" href="${castawayHref(castawayId)}">${avatar(castawayId, size)}<span>${esc(shortName(castawayId))}</span></a>`;
+  }
+
+  // Display order wherever castaways are listed: still in (most points first),
+  // then out (most recently out first).
+  const castawayOrder = (() => {
+    const stats = (c) => season.castaways[c.id];
+    const inGame = LEAGUE.castaways.filter((c) => stats(c).active).sort((a, b) => stats(b).seasonPoints - stats(a).seasonPoints);
+    const out = LEAGUE.castaways.filter((c) => !stats(c).active).sort((a, b) => stats(b).eliminatedIn - stats(a).eliminatedIn);
+    return { inGame: inGame.map((c) => c.id), out: out.map((c) => c.id) };
+  })();
 
   // Data mistakes are shown loudly at the top of every page.
   function errorsHtml() {
@@ -133,6 +161,10 @@ const UI = (() => {
     timeUntil,
     breakdownItem,
     episodeLink,
+    castawayHref,
+    castawayLink,
+    castawayPerson,
+    castawayOrder,
     pickChip,
     errorsHtml,
   };

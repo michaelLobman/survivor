@@ -17,9 +17,9 @@
     if (!season.winner) return "";
     const champ = season.standings[0];
     return `<section class="card mb-4"><div class="card-body d-flex align-items-center gap-3">
-      ${UI.avatar(season.winner, 64)}
+      <a href="${UI.castawayHref(season.winner)}" tabindex="-1" aria-hidden="true">${UI.avatar(season.winner, 64)}</a>
       <div>
-        <div class="eyebrow">Sole Survivor: ${esc(UI.castawayById.get(season.winner).name)}</div>
+        <div class="eyebrow">Sole Survivor: <a class="castaway-link" href="${UI.castawayHref(season.winner)}">${esc(UI.castawayById.get(season.winner).name)}</a></div>
         <div class="fw-semibold">League champion: ${esc(champ.player.name)} with ${UI.pointsHtml(champ.total)} points</div>
       </div>
     </div></section>`;
@@ -37,10 +37,10 @@
       .map((p) => {
         const castaway = lastCompleted.picks[p.id].castaway;
         return `<li class="d-flex align-items-center gap-3 py-1">
-          ${UI.avatar(castaway, 48)}
+          <a href="${UI.castawayHref(castaway)}" tabindex="-1" aria-hidden="true">${UI.avatar(castaway, 48)}</a>
           <div class="flex-grow-1">
             <div class="dash-name">${esc(p.name)}</div>
-            <div class="small text-body-secondary">with ${esc(UI.shortName(castaway))}</div>
+            <div class="small text-body-secondary">with <a class="castaway-link" href="${UI.castawayHref(castaway)}">${esc(UI.shortName(castaway))}</a></div>
           </div>
           ${UI.pointsHtml(top, "fs-5 fw-semibold")}
         </li>`;
@@ -99,7 +99,25 @@
         ${badge}
       </div>
       ${body}
+      ${upcomingPicks()}
     </div></section>`;
+  }
+
+  // Picks submitted for the upcoming episode, highest-ranked player first.
+  function upcomingPicks() {
+    const rows = season.standings
+      .filter((row) => next.picks[row.player.id])
+      .map(
+        (row) => `<li class="d-flex align-items-center justify-content-between gap-3 py-1">
+          <span class="fw-semibold">${esc(row.player.name)}</span>
+          ${UI.pickChip(next.picks[row.player.id], 24, { ...QUIET, link: true })}
+        </li>`,
+      );
+    if (rows.length === 0) return "";
+    return `<div class="upcoming-picks">
+      <div class="eyebrow mb-1">Picks in</div>
+      <ul class="list-unstyled mb-0">${rows.join("")}</ul>
+    </div>`;
   }
 
   // --- Player cards ---
@@ -140,7 +158,7 @@
     if (stats.favorites.length === 0) return "";
     const chips = stats.favorites
       .map(
-        (f) => `<span class="d-inline-flex align-items-center gap-2">${UI.pickChip({ castaway: f.id }, 28, QUIET)}
+        (f) => `<span class="d-inline-flex align-items-center gap-2">${UI.pickChip({ castaway: f.id }, 28, { ...QUIET, link: true })}
           <span class="small text-nowrap">×${f.count} ${UI.pointsHtml(f.points)}</span></span>`,
       )
       .join("");
@@ -163,14 +181,14 @@
         <summary class="d-flex align-items-center gap-3">${head}<span class="chevron" aria-hidden="true">›</span></summary>
         <div class="history-breakdown pe-4 mt-2 mb-1">
           <ul class="list-unstyled breakdown mb-2">${score.items.map(UI.breakdownItem).join("")}</ul>
-          ${UI.episodeLink(e.number, "See episode")}
+          <div class="d-flex flex-wrap gap-2">${UI.episodeLink(e.number, "See episode")}${pick ? UI.castawayLink(pick.castaway) : ""}</div>
         </div>
       </details>
     </li>`;
   }
 
   function historySection(playerId) {
-    // Completed episodes only; this week's pick is already on the card's "This week" line.
+    // Completed episodes only; upcoming picks are on the episode card.
     const rows = completed
       .filter(leaguePicked)
       .reverse()
@@ -203,33 +221,14 @@
   function playerCard(row) {
     const { player } = row;
     const stats = statsFor(player.id);
-    // Last week's pick (with its points) and this week's, so the card isn't all "No pick" early in the week.
-    // Spans, not divs: these sit inside <summary>, which only allows inline content.
-    const pickLine = (label, pick, points = null) => `<span class="pick-line">
-        <span class="eyebrow">${label}</span>${UI.pickChip(pick, 24, { ...QUIET, points })}
-      </span>`;
-    let lastWeek = "";
-    if (lastCompleted && leaguePicked(lastCompleted)) {
-      const pick = lastCompleted.picks[player.id];
-      lastWeek = pickLine("Last week", pick, pick ? lastCompleted.playerPoints[player.id].total : null);
-    }
-    const thisWeek = next ? pickLine("This week", next.picks[player.id]) : "";
-    // Before the first scored episode there's no rank, total, or history to show.
-    if (!leagueStarted) {
-      return `<div class="card standings-row mb-2" id="${esc(player.id)}"><div class="card-body">
-        <div class="fw-semibold">${esc(player.name)}</div>
-        ${thisWeek}
-      </div></div>`;
-    }
-    // Two rows: rank, name, and total on top; the pick lines get the full width below,
-    // so a long chip can never run into the total.
+    // Collapsed: rank, name, total. Expanded: stats, pick history (newest first, so the
+    // previous episode leads), and most-picked castaways. Upcoming picks are on the episode card.
     return `<details class="card expandable standings-row mb-2${rowState(row)}" id="${esc(player.id)}">
       <summary class="card-body standings-summary">
         <span class="standings-rank tabular">${rankLabel(row.rank)}</span>
         <span><span class="fw-semibold">${esc(player.name)}</span> ${movementHtml(row.movement)}</span>
         ${UI.pointsHtml(row.total, "fs-5 fw-semibold")}
         <span class="chevron" aria-hidden="true">›</span>
-        <span class="standings-picks">${lastWeek}${thisWeek}</span>
       </summary>
       <div class="card-body pt-0">
         ${statsRow(stats)}
@@ -249,7 +248,7 @@
         ${after}
       </div>
       ${notStarted}
-      ${season.standings.map(playerCard).join("")}`;
+      ${leagueStarted ? season.standings.map(playerCard).join("") : ""}`;
   }
 
   app.innerHTML = UI.errorsHtml() + championCard() + topScorersCard() + episodeCard() + standings();

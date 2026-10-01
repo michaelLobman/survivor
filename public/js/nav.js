@@ -6,7 +6,10 @@
     ["castaways.html", "Castaways"],
     ["rules.html", "Rules"],
   ];
-  const current = location.pathname.split("/").pop() || "index.html";
+  // A castaway's own page belongs under Castaways.
+  const SECTION_OF = { "castaway.html": "castaways.html" };
+  const file = location.pathname.split("/").pop() || "index.html";
+  const current = SECTION_OF[file] || file;
 
   const links = pages
     .map(([href, label]) => {
