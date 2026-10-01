@@ -20,6 +20,12 @@
   // Episodes this castaway scored in, newest first (they score every episode they're in).
   const played = completed.filter((e) => e.castawayPoints[id]).reverse();
   const pickedIn = (e, playerId) => e.picks[playerId]?.castaway === id;
+  // A pick counts once picks lock, even before results are in. Picks for an episode
+  // that hasn't locked can still change, so they're only mentioned under "Picked by".
+  const isLocked = (e) => e.completed || e.airsAt <= Date.now();
+  const timesPicked = season.episodes
+    .filter(isLocked)
+    .reduce((count, e) => count + LEAGUE.players.filter((p) => pickedIn(e, p.id)).length, 0);
   const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
   function backLink() {
@@ -58,7 +64,7 @@
     const average = totals.length ? Math.round(totals.reduce((sum, t) => sum + t.points, 0) / totals.length) : null;
     return `<div class="stat-grid mb-4">
       ${statTile("Season points", UI.pointsHtml(stats.seasonPoints))}
-      ${statTile("Times picked", stats.timesPicked)}
+      ${statTile("Times picked", timesPicked)}
       ${statTile("Best episode", best ? `${UI.pointsHtml(best.points)} <span class="eyebrow">Ep ${best.episode.number}</span>` : "–")}
       ${statTile("Average", average === null ? "–" : UI.pointsHtml(average))}
     </div>`;

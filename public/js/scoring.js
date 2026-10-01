@@ -343,10 +343,6 @@
         eliminatedIn: eliminatedIn[c.id] || null,
         tribe: tribeOf[c.id],
         seasonPoints: completed.reduce((sum, r) => sum + (r.castawayPoints[c.id]?.total || 0), 0),
-        timesPicked: completed.reduce(
-          (sum, r) => sum + Object.values(r.picks).filter((p) => p?.castaway === c.id).length,
-          0,
-        ),
       };
     }
 
