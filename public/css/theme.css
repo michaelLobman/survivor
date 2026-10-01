@@ -213,6 +213,26 @@ h1,
   padding-top: 0.75rem;
   border-top: 1px solid var(--bs-border-color);
 }
+/* Names with their picks: the pick column is as wide as the widest chip and every chip
+   starts at its left edge, so the faces line up however long each castaway's name is. */
+.name-pick-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 0.35rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.name-pick-list > li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.name-pick-list .pick-chip {
+  justify-self: start;
+}
 .player-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));

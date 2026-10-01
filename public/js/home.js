@@ -108,7 +108,7 @@
     const rows = season.standings
       .filter((row) => next.picks[row.player.id])
       .map(
-        (row) => `<li class="d-flex align-items-center justify-content-between gap-3 py-1">
+        (row) => `<li>
           <span class="fw-semibold">${esc(row.player.name)}</span>
           ${UI.pickChip(next.picks[row.player.id], 24, { ...QUIET, link: true })}
         </li>`,
@@ -116,7 +116,7 @@
     if (rows.length === 0) return "";
     return `<div class="upcoming-picks">
       <div class="eyebrow mb-1">Picks in</div>
-      <ul class="list-unstyled mb-0">${rows.join("")}</ul>
+      <ul class="name-pick-list">${rows.join("")}</ul>
     </div>`;
   }
 
