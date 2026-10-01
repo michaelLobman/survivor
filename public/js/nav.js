@@ -18,6 +18,9 @@
     })
     .join("");
 
+  // iOS Safari only applies :active (our press states) once the page listens for touches.
+  document.addEventListener("touchstart", () => {}, { passive: true });
+
   document.getElementById("nav").innerHTML = `
     <header class="site-header border-bottom">
       <div class="container app-container py-3">

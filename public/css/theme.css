@@ -16,6 +16,10 @@
   --card-radius: 1rem;
   /* One timing for every hover effect, so pieces that move together stay in sync. */
   --hover-timing: 0.2s ease;
+  /* Rows that open in place tint neutral on hover/press; orange is for things that navigate. */
+  --press-tint: rgba(255, 255, 255, 0.05);
+  /* A face "lighting up": brighter, with an orange glow. */
+  --face-lit: brightness(1.08) drop-shadow(0 0 0.5rem rgba(255, 122, 69, 0.5));
   --surface: #17171a;
   --surface-raised: #202024;
   --ink: #ececee;
@@ -75,9 +79,6 @@ h1,
   padding: 0.35rem 0.45rem;
   border-radius: 999px;
   white-space: nowrap;
-}
-.site-nav .nav-link:hover {
-  color: var(--ink);
 }
 .site-nav .nav-link.active {
   background: var(--primary-soft);
@@ -308,10 +309,6 @@ h1,
   line-height: 1;
   text-decoration: none;
 }
-a.ep-step:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
 .ep-step.is-disabled {
   opacity: 0.3;
 }
@@ -363,20 +360,10 @@ a.ep-step:hover {
   white-space: nowrap;
   transition: background-color var(--hover-timing), border-color var(--hover-timing), transform var(--hover-timing);
 }
-/* On hover the button fills in and grows slightly; the arrow nudges forward. */
-.ep-link:hover {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-  color: var(--primary);
-  transform: scale(1.05);
-}
 .ep-link-arrow {
   font-size: 1.1em;
   line-height: 1;
   transition: transform var(--hover-timing);
-}
-.ep-link:hover .ep-link-arrow {
-  transform: translateX(2px);
 }
 
 /* Episode switcher: ‹ name › with a dropdown list of every episode */
@@ -422,9 +409,6 @@ a.ep-step:hover {
   border-radius: 0.6rem;
   color: var(--ink);
   text-decoration: none;
-}
-.ep-menu-option:hover {
-  background: var(--surface);
 }
 .ep-menu-option.active {
   background: var(--primary-soft);
@@ -546,38 +530,22 @@ a.ep-step:hover {
   }
 }
 
-/* Links to a castaway's page: keep the surrounding look, turn orange on hover. */
+/* Links to a castaway's (or player's) page: the surrounding look plus a subtle
+   underline, so they read as links without relying on hover. */
 .castaway-link {
   color: inherit;
-  text-decoration: none;
-}
-.castaway-link:hover {
-  color: var(--primary);
+  text-decoration: underline;
+  text-decoration-color: rgba(154, 156, 163, 0.45);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 a.pick-chip {
   color: inherit;
   text-decoration: none;
 }
-a.pick-chip:hover {
-  border-color: var(--primary);
-}
-/* Every face that links to a castaway grows, brightens, and glows on hover: one
-   behavior site-wide. An eliminated castaway's face regains its color. */
-a .avatar {
-  transition: transform var(--hover-timing), filter var(--hover-timing);
-}
-a:hover .avatar {
-  transform: scale(1.08);
-  filter: brightness(1.08) drop-shadow(0 0 0.5rem rgba(255, 122, 69, 0.5));
-}
 .facepile-face {
   display: block;
   min-width: 0;
-}
-/* The hovered face rises above its overlapping neighbors. */
-.facepile-face:hover {
-  position: relative;
-  z-index: 1;
 }
 
 /* Castaways page: photo grid, 3 across on phones and more as the screen widens. */
@@ -603,12 +571,6 @@ a:hover .avatar {
   text-align: center;
   text-decoration: none;
   transition: background-color var(--hover-timing), border-color var(--hover-timing), transform var(--hover-timing);
-}
-.castaway-tile:hover {
-  border-color: rgba(255, 122, 69, 0.45);
-  background: var(--primary-soft);
-  color: var(--ink);
-  transform: translateY(-2px);
 }
 .castaway-tile-name {
   max-width: 100%;
@@ -637,9 +599,6 @@ a:hover .avatar {
   font-weight: 600;
   text-decoration: none;
 }
-.back-link:hover {
-  color: var(--primary);
-}
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -655,4 +614,152 @@ a:hover .avatar {
   font-size: 1.6rem;
   font-weight: 700;
   line-height: 1.2;
+}
+
+/* ==========================================================================
+   Interaction states, in one place.
+   - Hover (mouse only) previews a click. Touch screens never see it, so a tap
+     can't leave it stuck on.
+   - Press (every device) confirms it: compact things push in and light up;
+     rows that open in place tint without moving.
+   - Pressing is near-instant; letting go eases back at the shared hover timing.
+   ========================================================================== */
+html {
+  -webkit-tap-highlight-color: transparent; /* the press states below replace it */
+}
+a .avatar {
+  transition: transform var(--hover-timing), filter var(--hover-timing);
+}
+a.pick-chip,
+.ep-step,
+.segmented-option,
+.site-nav .nav-link,
+.castaway-link,
+.back-link,
+.expandable > summary,
+.ep-menu > summary {
+  transition: color var(--hover-timing), background-color var(--hover-timing), border-color var(--hover-timing),
+    box-shadow var(--hover-timing), transform var(--hover-timing);
+}
+/* Pick history rows have no padding of their own; the tint reaches past their edges. */
+.history-row .expandable > summary {
+  border-radius: 0.5rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav .nav-link:not(.active):hover,
+  .segmented-option:not(.active):hover {
+    color: var(--ink);
+  }
+  a.ep-step:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .ep-link:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary);
+    transform: scale(1.05);
+  }
+  .ep-link:hover .ep-link-arrow {
+    transform: translateX(2px);
+  }
+  .ep-menu-option:hover {
+    background: var(--surface);
+  }
+  .castaway-link:hover,
+  .back-link:hover {
+    color: var(--primary);
+    text-decoration-color: currentColor;
+  }
+  a.pick-chip:hover {
+    border-color: var(--primary);
+  }
+  /* A linked face grows and lights up; an eliminated castaway's face regains its color. */
+  a:hover .avatar {
+    transform: scale(1.08);
+    filter: var(--face-lit);
+  }
+  .castaway-tile:hover {
+    border-color: rgba(255, 122, 69, 0.45);
+    background: var(--primary-soft);
+    transform: translateY(-2px);
+  }
+  .expandable > summary:hover,
+  .ep-menu > summary:hover {
+    background-color: var(--press-tint);
+  }
+  .history-row .expandable > summary:hover {
+    box-shadow: 0 0 0 0.4rem var(--press-tint);
+  }
+  /* The hovered face rises above its overlapping neighbors. */
+  .facepile-face:hover {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Press: near-instant in, eased out. */
+:active,
+:active .avatar {
+  transition-duration: 0.05s;
+}
+/* Compact things push in. */
+.castaway-tile:active,
+a.pick-chip:active,
+.ep-link:active,
+a.ep-step:active,
+.segmented-option:active {
+  transform: scale(0.97);
+}
+.castaway-tile:active,
+.ep-link:active {
+  border-color: rgba(255, 122, 69, 0.45);
+  background: var(--primary-soft);
+}
+a.pick-chip:active,
+a.ep-step:active {
+  border-color: var(--primary);
+}
+/* A linked face lights up (and regains color if eliminated). Standalone faces also
+   push in; faces inside a tile or chip ride along with their container. */
+a:active .avatar {
+  transform: scale(0.95);
+  filter: var(--face-lit);
+}
+.castaway-tile:active .avatar,
+a.pick-chip:active .avatar {
+  transform: none;
+}
+.facepile-face:active {
+  position: relative;
+  z-index: 1;
+}
+.castaway-link:active,
+.back-link:active {
+  color: var(--primary);
+  text-decoration-color: currentColor;
+}
+/* Rows that open in place tint without moving. */
+.expandable > summary:active,
+.ep-menu > summary:active,
+.site-nav .nav-link:not(.active):active,
+.segmented-option:not(.active):active {
+  background-color: var(--press-tint);
+}
+.history-row .expandable > summary:active {
+  box-shadow: 0 0 0 0.4rem var(--press-tint);
+}
+
+/* Reduced motion: keep the color feedback, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .castaway-tile,
+  .ep-link,
+  .ep-link-arrow,
+  a.pick-chip,
+  a.ep-step,
+  .segmented-option,
+  a .avatar {
+    transform: none !important;
+  }
 }
