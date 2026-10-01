@@ -94,10 +94,12 @@ const UI = (() => {
   }
 
   // A player's pick: the castaway's face and name on an orange-tinted chip.
-  // `quiet` drops the orange where another element is the page's highlight.
-  function pickChip(pick, size = 32, { quiet = false } = {}) {
+  // `quiet` drops the orange where another element is the page's highlight;
+  // `points` adds what the pick scored, inside the chip so it reads as part of the pick.
+  function pickChip(pick, size = 32, { quiet = false, points = null } = {}) {
     if (!pick) return `<span class="pick-chip is-empty">No pick</span>`;
-    return `<span class="pick-chip${quiet ? " is-quiet" : ""}">${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span></span>`;
+    const scored = points === null ? "" : `<span class="pick-chip-points">${pointsHtml(points)}</span>`;
+    return `<span class="pick-chip${quiet ? " is-quiet" : ""}">${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span>${scored}</span>`;
   }
 
   // Every link to an episode looks the same: orange text with a chevron.

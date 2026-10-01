@@ -10,6 +10,8 @@
   const leaguePicked = (e) => Object.values(e.picks).some(Boolean);
   // Orange on this page belongs to the top scorers card, so pick chips stay neutral.
   const QUIET = { quiet: true };
+  // Standings mean nothing until an episode the league picked for has been scored.
+  const leagueStarted = completed.some(leaguePicked);
 
   function championCard() {
     if (!season.winner) return "";
@@ -179,46 +181,55 @@
     return `<div class="mt-3"><div class="eyebrow mb-1">Pick history</div>${body}</div>`;
   }
 
+  // Places gained or lost since last episode; nothing when unchanged.
   function movementHtml(movement) {
-    if (movement === null || movement === 0) return `<span class="eyebrow">–</span>`;
-    return movement > 0
-      ? `<span class="small pts-pos">▲${movement}</span>`
-      : `<span class="small pts-neg">▼${Math.abs(movement)}</span>`;
+    if (!movement) return "";
+    const n = Math.abs(movement);
+    const up = movement > 0;
+    return `<span class="small ${up ? "pts-pos" : "pts-neg"}">
+      <span aria-hidden="true">${up ? "▲" : "▼"}${n}</span><span class="visually-hidden">${up ? "up" : "down"} ${n} ${n === 1 ? "place" : "places"}</span>
+    </span>`;
   }
 
-  // Tint the leader green and anyone who dropped red. No leader while everyone is tied.
+  // Shared ranks read "T4".
+  const playersAtRank = new Map();
+  season.standings.forEach((row) => playersAtRank.set(row.rank, (playersAtRank.get(row.rank) || 0) + 1));
+  const rankLabel = (rank) => (playersAtRank.get(rank) > 1 ? `T${rank}` : String(rank));
+
+  // Only the leader is highlighted (and nobody while everyone is tied); the arrows show movement.
   const everyoneTied = season.standings.every((row) => row.rank === 1);
-  function rowState(row) {
-    if (row.rank === 1 && !everyoneTied) return " is-leader";
-    if (row.movement < 0) return " is-dropping";
-    return "";
-  }
+  const rowState = (row) => (row.rank === 1 && !everyoneTied ? " is-leader" : "");
 
   function playerCard(row) {
     const { player } = row;
     const stats = statsFor(player.id);
     // Last week's pick (with its points) and this week's, so the card isn't all "No pick" early in the week.
-    const pickLine = (label, pick, points) => `<div class="pick-line">
-        <span class="eyebrow">${label}</span>${UI.pickChip(pick, 24, QUIET)}${points === null ? "" : UI.pointsHtml(points, "small fw-semibold")}
-      </div>`;
+    // Spans, not divs: these sit inside <summary>, which only allows inline content.
+    const pickLine = (label, pick, points = null) => `<span class="pick-line">
+        <span class="eyebrow">${label}</span>${UI.pickChip(pick, 24, { ...QUIET, points })}
+      </span>`;
     let lastWeek = "";
     if (lastCompleted && leaguePicked(lastCompleted)) {
       const pick = lastCompleted.picks[player.id];
       lastWeek = pickLine("Last week", pick, pick ? lastCompleted.playerPoints[player.id].total : null);
     }
-    const thisWeek = next ? pickLine("This week", next.picks[player.id], null) : "";
+    const thisWeek = next ? pickLine("This week", next.picks[player.id]) : "";
+    // Before the first scored episode there's no rank, total, or history to show.
+    if (!leagueStarted) {
+      return `<div class="card standings-row mb-2" id="${esc(player.id)}"><div class="card-body">
+        <div class="fw-semibold">${esc(player.name)}</div>
+        ${thisWeek}
+      </div></div>`;
+    }
+    // Two rows: rank, name, and total on top; the pick lines get the full width below,
+    // so a long chip can never run into the total.
     return `<details class="card expandable standings-row mb-2${rowState(row)}" id="${esc(player.id)}">
-      <summary class="card-body d-flex align-items-center gap-3">
-        <span class="standings-rank tabular">${row.rank}</span>
-        <div class="flex-grow-1 min-w-0">
-          <div class="fw-semibold">${esc(player.name)}</div>
-          ${lastWeek}${thisWeek}
-        </div>
-        <div class="text-end flex-shrink-0">
-          <div>${UI.pointsHtml(row.total, "fs-5 fw-semibold")}</div>
-          ${movementHtml(row.movement)}
-        </div>
+      <summary class="card-body standings-summary">
+        <span class="standings-rank tabular">${rankLabel(row.rank)}</span>
+        <span><span class="fw-semibold">${esc(player.name)}</span> ${movementHtml(row.movement)}</span>
+        ${UI.pointsHtml(row.total, "fs-5 fw-semibold")}
         <span class="chevron" aria-hidden="true">›</span>
+        <span class="standings-picks">${lastWeek}${thisWeek}</span>
       </summary>
       <div class="card-body pt-0">
         ${statsRow(stats)}
@@ -229,11 +240,14 @@
   }
 
   function standings() {
-    const after = lastCompleted ? UI.episodeLink(lastCompleted.number, `After Episode ${lastCompleted.number}`) : "";
+    const after = leagueStarted ? UI.episodeLink(lastCompleted.number, `After Episode ${lastCompleted.number}`) : "";
+    const firstScored = next ? `Episode ${next.number} is` : "the first episode is";
+    const notStarted = leagueStarted ? "" : `<p class="small text-body-secondary mb-2">Standings start once ${firstScored} scored.</p>`;
     return `<div class="d-flex justify-content-between align-items-baseline mb-2">
         <h2 class="section-title">Standings</h2>
         ${after}
       </div>
+      ${notStarted}
       ${season.standings.map(playerCard).join("")}`;
   }
 
