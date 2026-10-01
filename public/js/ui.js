@@ -99,13 +99,11 @@ const UI = (() => {
 
   // A player's pick: the castaway's face and name on an orange-tinted chip.
   // `quiet` drops the orange where another element is the page's highlight;
-  // `points` adds what the pick scored, inside the chip so it reads as part of the pick;
   // `link` makes the chip open the castaway's page (not inside <summary>: one tap target per row).
-  function pickChip(pick, size = 32, { quiet = false, points = null, link = false } = {}) {
+  function pickChip(pick, size = 32, { quiet = false, link = false } = {}) {
     if (!pick) return `<span class="pick-chip is-empty">No pick</span>`;
-    const scored = points === null ? "" : `<span class="pick-chip-points">${pointsHtml(points)}</span>`;
     const tag = link ? `a href="${castawayHref(pick.castaway)}"` : "span";
-    const content = `${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span>${scored}`;
+    const content = `${avatar(pick.castaway, size)}<span class="pick-chip-name">${esc(shortName(pick.castaway))}</span>`;
     return `<${tag} class="pick-chip${quiet ? " is-quiet" : ""}">${content}</${link ? "a" : "span"}>`;
   }
 
