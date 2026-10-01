@@ -56,7 +56,20 @@ castaways are left.
 | Left the game | `{ type: "leftGame", castaway: "rob" }` | Quit / medevac: no points either way |
 | Tribe swap | `{ type: "moveTribe", castaways: ["lewis", "ori"], tribe: "toka" }` | `tribe` is where they move to; one event per destination tribe |
 | Individual game starts | `{ type: "individualGame" }` | Add once, at the point immunity becomes individual |
+| Merge | `{ type: "moveTribe", castaways: [...everyone left], tribe: "kiyu" }` | See **The merge** below |
 | Winner | `{ type: "soleSurvivor", castaway: "..." }` | Finale only; triggers the winner bonus |
+
+### The merge
+Everyone stays in a tribe after the merge:
+1. Add the merged tribe to `tribes` (`id`, `name`, `color`).
+2. Enter one `moveTribe` with every castaway still in the game, then
+   `{ type: "individualGame" }`.
+
+The site shows the merge at the top of that episode and the tribe once on the
+Castaways page. If the merged tribe isn't named yet, use a placeholder such as
+`{ id: "merged", name: "Merged", color: "#2E9E8F" }` and change only its `name`
+and `color` once it's named. Every page looks tribes up by `id`, so the new name
+shows everywhere, past episodes included.
 
 Shortcuts and overrides:
 - **Tribe with exceptions:** `{ type: "immunity", tribe: "savu", except: ["ori"] }`

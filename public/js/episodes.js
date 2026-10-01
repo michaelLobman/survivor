@@ -182,11 +182,38 @@
     return section(label, list(rows));
   }
 
+  // The merge: a move that puts everyone still in the game on one tribe. Castaways who
+  // left earlier in this episode aren't in the game anymore, so they don't count.
+  function isMerge(ev) {
+    const before = timeline.slice(0, timeline.indexOf(ev));
+    const gone = before.filter((e) => e.type === "votedOut" || e.type === "leftGame").reduce((n, e) => n + e.castaways.length, 0);
+    return ev.castaways.length > 1 && ev.castaways.length === episode.remainingAtLock - gone;
+  }
+  const mergeEvent = ofType("moveTribe").find(isMerge) || null;
+  const individualStarts = ofType("individualGame").length > 0;
+
+  // The episode's headline when it happens, so it sits at the top of the dashboard.
+  function mergeSection() {
+    if (!mergeEvent) return "";
+    const phase = individualStarts ? `<p class="small text-body-secondary mb-0 mt-2">Individual immunity from here on.</p>` : "";
+    return section(
+      "The merge",
+      `<div class="d-flex align-items-center justify-content-between gap-3">
+        <span class="d-flex align-items-center gap-2"><span class="dash-name">Merged into</span>${UI.tribeBadge(mergeEvent.tribe)}</span>
+        <span class="eyebrow">${mergeEvent.castaways.length} castaways</span>
+      </div>
+      <div class="mt-2">${facepile(mergeEvent.castaways)}</div>
+      ${phase}`,
+    );
+  }
+
   // Moves grouped by destination: one person reads "Lewis → Toka"; a swap reads
   // "Moved to Toka" with everyone below.
   function movesSection() {
     const byTribe = new Map();
-    ofType("moveTribe").forEach((ev) => byTribe.set(ev.tribe, [...(byTribe.get(ev.tribe) || []), ...ev.castaways]));
+    ofType("moveTribe")
+      .filter((ev) => ev !== mergeEvent)
+      .forEach((ev) => byTribe.set(ev.tribe, [...(byTribe.get(ev.tribe) || []), ...ev.castaways]));
     const rows = [...byTribe].map(([tribe, ids]) => {
       if (ids.length === 1) {
         return row(
@@ -202,12 +229,13 @@
   function dashboard() {
     return `<section class="card mb-4 episode-dashboard"><div class="card-body">
       ${peopleSection("Sole Survivor", ["soleSurvivor"])}
+      ${mergeSection()}
       ${bootsSection()}
       ${challengeSections()}
       ${tribalSection()}
       ${peopleSection("Advantages found", ["advantage"])}
       ${movesSection()}
-      ${ofType("individualGame").length ? section("Phase change", `<span class="small">The individual game begins.</span>`) : ""}
+      ${individualStarts && !mergeEvent ? section("Phase change", `<span class="small">The individual game begins.</span>`) : ""}
     </div></section>`;
   }
 
