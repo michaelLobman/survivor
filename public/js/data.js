@@ -70,7 +70,20 @@ const LEAGUE = {
       number: 2,
       title: "Weaponized Honesty",
       airsAt: "2026-09-30T20:00:00-04:00",
-      picks: { mike: "jenna", annie: "kristin", michele: "carter", brandon: "sharonda", mary: "patt", kelsey: "lewis", john: "maggie"},
+      picks: { mike: "jenna", annie: "kristin", michele: "carter", brandon: "sharonda", mary: "patt", kelsey: "lewis", john: "maggie" },
+      events: [
+        { type: "reward", tribe: "toka" },
+        { type: "immunity", tribe: "toka" },
+        { type: "advantage", castaway: "jelly" },
+        { type: "votesAgainst", castaway: "ana", count: 6 },
+        { type: "votesAgainst", castaway: "eric", count: 4 },
+        { type: "votedOut", castaway: "ana" },
+      ],
+    },
+    {
+      number: 3,
+      title: "What I’m Smellin’ Is Stinky",
+      airsAt: "2026-10-07T20:00:00-04:00",
     },
   ],
 };
