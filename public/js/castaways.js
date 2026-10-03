@@ -32,5 +32,7 @@
       <span class="d-flex align-items-center gap-2">${sharedTribe ? UI.tribeBadge(sharedTribe) : ""}<span class="eyebrow">${inGame.length} castaways</span></span>
     </div>
     <div class="mb-4">${grid(inGame)}</div>
-    ${out.length ? `<h2 class="section-title mb-2">Eliminated</h2>${grid(out)}` : ""}`;
+    ${out.length ? `<h2 class="section-title mb-1">Eliminated</h2>
+      <p class="probst-line mb-2">In this game, fire represents your life. When it's gone, so are you.</p>
+      ${grid(out)}` : ""}`;
 })();

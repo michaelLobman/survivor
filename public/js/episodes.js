@@ -149,9 +149,8 @@
     ["immunity", "Immunity"],
   ];
   function challengeSections() {
-    return CHALLENGE_TYPES.map(([type, label]) => {
-      return section(label, groupList(ofType(type).map(challengeRow)));
-    }).join("");
+    const sections = CHALLENGE_TYPES.map(([type, label]) => section(label, groupList(ofType(type).map(challengeRow)))).join("");
+    return sections ? `<p class="probst-line mb-2">Let's get it on!</p>${sections}` : "";
   }
 
   function tribalSection() {
@@ -185,7 +184,8 @@
         .join("");
     const idolLines = probstLines("idolCancel", (name) => `Any votes cast for ${name} will not count.`);
     const shotLines = probstLines("shotInTheDark", (name) => `${name}, you are safe.`);
-    return section("Tribal council", `<p class="probst-line mb-2">I'll read the votes…</p>${list(rows)}${idolLines}${shotLines}`);
+    const closing = `<p class="probst-line mb-0 mt-2">Grab your torches, head back to camp. Goodnight.</p>`;
+    return section("Tribal council", `<p class="probst-line mb-2">I'll read the votes…</p>${list(rows)}${idolLines}${shotLines}${closing}`);
   }
 
   function peopleSection(label, types) {
@@ -271,12 +271,17 @@
     </details>`;
   }
 
-  // Players ranked by this episode's points, each with their pick.
+  // Players ranked by this episode's points, each with their pick. A Probst line
+  // separates the top scorer(s) from everyone else, like the losers of a challenge.
   function playerScores() {
-    return LEAGUE.players
+    const ranked = LEAGUE.players
       .map((p) => ({ player: p, pick: episode.picks[p.id], score: episode.playerPoints[p.id] }))
-      .sort((a, b) => b.score.total - a.score.total)
-      .map(({ player, pick, score }) =>
+      .sort((a, b) => b.score.total - a.score.total);
+    const topCount = ranked.filter((r) => r.score.total === ranked[0].score.total).length;
+    const divider = `<p class="probst-line my-2">Got nothing for you.</p>`;
+    return ranked
+      .map(({ player, pick, score }, i) =>
+        (i === topCount ? divider : "") +
         scoreCard({
           score,
           castawayId: pick?.castaway,
