@@ -125,14 +125,16 @@
         const votes = tally[id] || { votes: 0, points: 0 };
         const parts = [];
         if (votes.votes) parts.push(`${plural(votes.votes, "vote")} ${UI.pointsHtml(votes.points)}`);
-        if (voted) parts.push(`${ev.withIdol ? "voted out holding an idol" : "voted out"} ${UI.pointsHtml(ev.points)}`);
+        if (voted) parts.push(`voted out ${UI.pointsHtml(ev.points)}`);
+        const idolLine = ev.withIdol ? `<div class="probst-line">Went home with an idol in their pocket.</div>` : "";
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
           <a class="is-out" href="${UI.castawayHref(id)}" tabindex="-1" aria-hidden="true">${UI.avatar(id, 64)}</a>
           <div class="flex-grow-1">
-            <div class="eyebrow">${voted ? "Voted out" : "Left the game"}</div>
+            <div class="eyebrow">${voted ? "The tribe has spoken" : "Left the game"}</div>
             <a class="dash-name castaway-link" href="${UI.castawayHref(id)}">${esc(UI.castawayById.get(id).name)}</a>
             <div class="small">${parts.join(" · ") || "No points either way"}</div>
+            ${idolLine}
           </div>
           ${total === null ? "" : UI.pointsHtml(total, "fs-5 fw-semibold")}
         </div>`;
@@ -162,6 +164,7 @@
           32,
         ),
       );
+    const idolIds = ofType("idolCancel").flatMap((ev) => ev.castaways);
     const idols = ofType("idolCancel").flatMap((ev) =>
       ev.castaways.map((id) =>
         row(
@@ -171,7 +174,12 @@
         ),
       ),
     );
-    return section("Tribal council", list([...votes, ...idols]));
+    const rows = [...votes, ...idols];
+    if (rows.length === 0) return "";
+    const idolLines = idolIds
+      .map((id) => `<p class="probst-line mb-0 mt-2">Any votes cast for ${esc(UI.shortName(id))} will not count.</p>`)
+      .join("");
+    return section("Tribal council", `<p class="probst-line mb-2">I'll read the votes…</p>${list(rows)}${idolLines}`);
   }
 
   function peopleSection(label, types) {
@@ -201,6 +209,7 @@
         <span class="d-flex align-items-center gap-2"><span class="dash-name">Merged into</span>${UI.tribeBadge(mergeEvent.tribe)}</span>
         <span class="eyebrow">${mergeEvent.castaways.length} castaways</span>
       </div>
+      <p class="probst-line mb-0 mt-2">Drop your buffs.</p>
       <div class="mt-2">${facepile(mergeEvent.castaways)}</div>
       ${phase}`,
     );
@@ -234,7 +243,7 @@
       ${tribalSection()}
       ${peopleSection("Advantages found", ["advantage"])}
       ${movesSection()}
-      ${individualStarts && !mergeEvent ? section("Phase change", `<span class="small">The individual game begins.</span>`) : ""}
+      ${individualStarts && !mergeEvent ? section("Phase change", `<span class="small">Immunity is back up for grabs.</span>`) : ""}
     </div></section>`;
   }
 

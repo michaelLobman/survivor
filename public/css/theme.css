@@ -131,6 +131,12 @@ h1,
   color: var(--muted);
   font-size: 0.8rem;
 }
+/* A Jeff Probst line: flavor text, quieter than the facts around it */
+.probst-line {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
 
 /* Castaway visuals */
 .avatar {

@@ -30,7 +30,7 @@
   app.innerHTML = `
     <h1 class="h5">Scoring</h1>
     <p class="text-body-secondary small">
-      Each week, pick one castaway. You score whatever they do that episode. Picks can repeat, and anyone can pick the same castaway.
+      Wanna know what you're playing for? Each week, pick one castaway. You score whatever they do that episode. Picks can repeat, and anyone can pick the same castaway.
     </p>
 
     <h2 class="section-title mt-4 mb-2">Phases</h2>

@@ -41,9 +41,11 @@
 
   function status() {
     if (season.winner === id) return `<span class="fw-semibold pts-pos">Sole Survivor</span>`;
-    if (stats.active) return `<span class="small text-body-secondary">Still in the game</span>`;
+    if (stats.active) return `<span class="small text-body-secondary">Still in the game. Fire represents life.</span>`;
     const { episode, left } = exit();
-    return `<span class="small text-body-secondary">${left ? "Left the game" : "Voted out"} in <a href="episodes.html?ep=${episode.number}">Episode ${episode.number}</a></span>`;
+    const episodeLink = `<a href="episodes.html?ep=${episode.number}">Episode ${episode.number}</a>`;
+    if (left) return `<span class="small text-body-secondary">Left the game in ${episodeLink}</span>`;
+    return `<span class="small text-body-secondary">The tribe has spoken · ${episodeLink}</span>`;
   }
 
   function hero() {

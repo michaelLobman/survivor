@@ -51,6 +51,7 @@
         <span class="featured-label">Episode ${lastCompleted.number} ${winners.length > 1 ? "top scorers" : "top scorer"}</span>
         ${UI.episodeLink(lastCompleted.number, "See episode")}
       </div>
+      <p class="probst-line mb-2">That's how you do it on Survivor!</p>
       <ul class="list-unstyled mb-0">${rows}</ul>
     </div></section>`;
   }
@@ -58,20 +59,19 @@
   const isLocked = () => next && Date.now() >= next.airsAt;
 
   // Before lock, the message follows who has picked: everyone is in; one or two
-  // stragglers are named; otherwise a general reminder.
+  // stragglers are named; otherwise a general call to vote (the Picks list shows who's in).
   function openMessage() {
-    const lockTime = `Picks lock ${UI.dateTime(next.airsAt)}`;
+    const when = UI.dateTime(next.airsAt);
     const missing = LEAGUE.players.filter((p) => !next.picks[p.id]);
+    const voteBy = `Cast your vote by ${when}. You cannot vote for yourself.`;
     if (missing.length === 0) {
-      return { headline: `All ${LEAGUE.players.length} picks are in`, note: `${lockTime}.` };
+      return { headline: `All ${LEAGUE.players.length} picks are in. Survivors ready?`, note: `Picks lock ${when}.` };
     }
-    if (missing.length === 1) {
-      return { headline: lockTime, note: `Still waiting on ${esc(missing[0].name)}. No pick, no points.` };
+    if (missing.length <= 2) {
+      const names = missing.map((p) => esc(p.name)).join(" and ");
+      return { headline: `Waiting on ${names}. Dig deep!`, note: voteBy };
     }
-    if (missing.length === 2) {
-      return { headline: lockTime, note: `Still waiting on ${esc(missing[0].name)} and ${esc(missing[1].name)}. No pick, no points.` };
-    }
-    return { headline: lockTime, note: "Send your pick to the commissioner before the episode airs. No pick, no points." };
+    return { headline: "It's time to vote.", note: voteBy };
   }
 
   // Two states: open for picks (with a countdown), then locked until results are posted.
@@ -83,14 +83,14 @@
       : `<span class="badge rounded-pill text-bg-warning">Locks in ${UI.timeUntil(next.airsAt)}</span>`;
     let body;
     if (locked) {
-      body = `<p class="fw-semibold mb-1 mt-2">Picks locked. Points coming soon.</p>
-        <p class="small text-body-secondary mb-0">Results post after the episode.</p>`;
+      body = `<p class="fw-semibold mb-1 mt-2">This is a live tribal.</p>
+        <p class="small text-body-secondary mb-0">Picks are locked, and the decision is final. I'll go tally the votes.</p>`;
     } else {
       const { headline, note } = openMessage();
       body = `<p class="fw-semibold mb-1 mt-2">${headline}</p>
+        <p class="small text-body-secondary mb-1">${note}</p>
         <p class="small text-body-secondary mb-0">
-          ${note}
-          Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale.
+          Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale. Worth playing for?
         </p>`;
     }
     return `<section id="episode-card" class="card mb-4"><div class="card-body">
@@ -115,7 +115,7 @@
       );
     if (rows.length === 0) return "";
     return `<div class="upcoming-picks">
-      <div class="eyebrow mb-1">Picks in</div>
+      <div class="eyebrow mb-1">Picks</div>
       <ul class="name-pick-list">${rows.join("")}</ul>
     </div>`;
   }
@@ -244,7 +244,7 @@
     // A label, not a link: the top scorers card already links to the episode.
     const after = leagueStarted ? `<span class="eyebrow">After Episode ${lastCompleted.number}</span>` : "";
     const firstScored = next ? `Episode ${next.number} is` : "the first episode is";
-    const notStarted = leagueStarted ? "" : `<p class="small text-body-secondary mb-2">Standings start once ${firstScored} scored.</p>`;
+    const notStarted = leagueStarted ? "" : `<p class="small text-body-secondary mb-2">Come on in! Standings start once ${firstScored} scored.</p>`;
     return `<div class="d-flex justify-content-between align-items-baseline mb-2">
         <h2 class="section-title">Standings</h2>
         ${after}
