@@ -1,30 +1,34 @@
 // Rules: generated from the scoring engine's tables, so the page can't drift from the math.
 (() => {
-  const { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER } = Scoring;
+  const { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER, guestPoints } = Scoring;
   const app = document.getElementById("app");
   const phaseKeys = Object.keys(PHASES);
 
   const tiered = Object.values(RULES).filter((r) => r.weight !== "flat");
   const flat = Object.values(RULES).filter((r) => r.weight === "flat");
 
-  // Voted out also shows the idol-in-pocket penalty, as a grey second line in the same cells.
-  const idolLine = (text) => `<br><em class="multiplier tabular">${text}</em>`;
+  // Variants of a tiered rule, shown as a grey second line in the same cells.
+  const variants = new Map([
+    [RULES.votedOut, { note: `×${IDOL_IN_POCKET_MULTIPLIER} with idol`, points: (p) => p * IDOL_IN_POCKET_MULTIPLIER }],
+    [RULES.reward, { note: "Half for a chosen guest", points: guestPoints }],
+  ]);
+  const variantLine = (text) => `<br><em class="multiplier tabular">${text}</em>`;
   const tieredRows = tiered
     .map((r) => {
-      const withIdol = r === RULES.votedOut;
+      const variant = variants.get(r);
       const cells = phaseKeys
         .map((k) => {
           const points = r.points * PHASES[k][r.weight];
-          const idol = withIdol ? idolLine(UI.points(points * IDOL_IN_POCKET_MULTIPLIER)) : "";
-          return `<td class="text-end text-nowrap">${UI.pointsHtml(points)}${idol}</td>`;
+          const second = variant ? variantLine(UI.points(variant.points(points))) : "";
+          return `<td class="text-end text-nowrap">${UI.pointsHtml(points)}${second}</td>`;
         })
         .join("");
-      const label = withIdol ? `${r.label}${idolLine(`×${IDOL_IN_POCKET_MULTIPLIER} with idol`)}` : r.label;
+      const label = variant ? `${r.label}${variantLine(variant.note)}` : r.label;
       return `<tr><td>${label}</td>${cells}</tr>`;
     })
     .join("");
   const flatRows = flat
-    .map((r) => `<tr><td>${r.label}</td><td class="text-end">${UI.pointsHtml(r.points)} per vote</td></tr>`)
+    .map((r) => `<tr><td>${r.label}</td><td class="text-end text-nowrap">${UI.pointsHtml(r.points)}${r.perCount ? " per vote" : ""}</td></tr>`)
     .join("");
 
   app.innerHTML = `
@@ -54,6 +58,15 @@
         <tbody>${flatRows}</tbody>
       </table>
     </div></div>
+
+    <h2 class="section-title mb-2">Fine print</h2>
+    <ul class="small">
+      <li><strong>Opting out</strong> means choosing to sit out: taking food instead of competing, declining to risk a vote, or turning down a journey. Sitting out because the tribes have uneven numbers doesn't count.</li>
+      <li><strong>Food for sitting out</strong> is just the opt-out penalty. It doesn't count as a reward.</li>
+      <li><strong>Reward placings:</strong> every tribe or castaway that wins something (1st or 2nd place, big or small reward) gets the full reward points.</li>
+      <li><strong>Giving a reward away:</strong> the winner keeps the full points, and anyone who goes in their place scores as a chosen guest.</li>
+      <li><strong>Shot in the Dark</strong> scores only when it works. A failed one is worth nothing either way.</li>
+    </ul>
 
     <h2 class="section-title mb-2">Sole Survivor bonus</h2>
     <p class="small">

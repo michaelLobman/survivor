@@ -26,12 +26,14 @@
     survived: { label: "Survived episode", points: 5, weight: "late" },
     immunity: { label: "Immunity", points: 10, weight: "late" },
     advantage: { label: "Found advantage", points: 5, weight: "late" },
-    tribeReward: { label: "Tribe reward win", points: 3, weight: "late" },
-    reward: { label: "Individual reward win", points: 8, weight: "late" },
-    rewardGuest: { label: "Chosen for reward", points: 4, weight: "late" },
+    reward: { label: "Reward", points: 5, weight: "late" },
     votedOut: { label: "Voted out", points: -10, weight: "early" },
     votesAgainst: { label: "Votes against", points: -2, weight: "flat", perCount: true },
     idolCancel: { label: "Idol cancels votes", points: 5, weight: "flat", perCount: true },
+    shotInTheDark: { label: "Safe with Shot in the Dark", points: 5, weight: "flat" },
+    // `optionalCount`: the event may leave out `count` (a Shot in the Dark that cancelled no votes).
+    shotInTheDarkCancel: { label: "Shot in the Dark cancels votes", points: 5, weight: "flat", perCount: true, optionalCount: true },
+    optOut: { label: "Opted out of a challenge", points: -10, weight: "flat" },
   };
 
   // Sole Survivor bonus per weekly pick = this x castaways in the game at lock.
@@ -40,27 +42,34 @@
   // A castaway voted out with an idol in their pocket takes this x the voted-out penalty.
   const IDOL_IN_POCKET_MULTIPLIER = 2;
 
-  // Event types the data file may use. "reward" with a tribe scores as tribeReward;
+  // A castaway chosen to join someone else's reward earns this share of the reward, rounded up.
+  const REWARD_GUEST_SHARE = 1 / 2;
+  const guestPoints = (points) => Math.ceil(points * REWARD_GUEST_SHARE);
+
+  // Event types the data file may use, and the rules each one scores (in breakdown order).
   // "survived" is never entered, it is computed at the end of each episode.
-  const SCORING_EVENTS = new Set([
-    "immunity",
-    "reward",
-    "rewardGuest",
-    "advantage",
-    "votedOut",
-    "votesAgainst",
-    "idolCancel",
+  const SCORING_EVENTS = new Map([
+    ["immunity", ["immunity"]],
+    ["reward", ["reward"]],
+    ["rewardGuest", ["reward"]], // scored at REWARD_GUEST_SHARE
+    ["advantage", ["advantage"]],
+    ["shotInTheDark", ["shotInTheDark", "shotInTheDarkCancel"]],
+    ["optOut", ["optOut"]],
+    ["votedOut", ["votedOut"]],
+    ["votesAgainst", ["votesAgainst"]],
+    ["idolCancel", ["idolCancel"]],
   ]);
   // Event types that change game state instead of scoring points.
   const STATE_EVENTS = new Set(["moveTribe", "individualGame", "leftGame", "soleSurvivor"]);
 
-  // `idolInPocket` applies only to votedOut; it is kept apart from the phase
-  // multiplier so breakdowns can show both.
-  function makeItem(ruleKey, phaseKey, { count = null, idolInPocket = false } = {}) {
+  // `idolInPocket` applies only to votedOut and `guest` only to reward; both are kept
+  // apart from the phase multiplier so breakdowns can show each one.
+  function makeItem(ruleKey, phaseKey, { count = null, idolInPocket = false, guest = false } = {}) {
     const rule = RULES[ruleKey];
     const multiplier = rule.weight === "flat" ? 1 : PHASES[phaseKey][rule.weight];
     const idolMultiplier = idolInPocket ? IDOL_IN_POCKET_MULTIPLIER : null;
     const times = rule.perCount ? count : 1;
+    const points = rule.points * multiplier * (idolMultiplier || 1) * times;
     return {
       rule: ruleKey,
       label: rule.label,
@@ -68,8 +77,9 @@
       phase: phaseKey,
       multiplier,
       idolMultiplier,
+      guestShare: guest ? REWARD_GUEST_SHARE : null,
       count: rule.perCount ? count : null,
-      points: rule.points * multiplier * (idolMultiplier || 1) * times,
+      points: guest ? guestPoints(points) : points,
     };
   }
 
@@ -270,9 +280,10 @@
           errors.push(`${at}: unknown event type`);
           return;
         }
-        const ruleKey = ev.type === "reward" && ev.tribe ? "tribeReward" : ev.type;
-        const rule = RULES[ruleKey];
-        if (rule.perCount && !(Number.isInteger(ev.count) && ev.count > 0)) {
+        const ruleKeys = SCORING_EVENTS.get(ev.type);
+        const countRule = ruleKeys.map((key) => RULES[key]).find((rule) => rule.perCount);
+        const countNeeded = countRule && (ev.count !== undefined || !countRule.optionalCount);
+        if (countNeeded && !(Number.isInteger(ev.count) && ev.count > 0)) {
           errors.push(`${at}: needs a positive whole-number "count"`);
           return;
         }
@@ -287,10 +298,14 @@
 
         const phase = ev.phase || currentPhase();
         const targets = resolveTargets(ev, at);
-        const item = makeItem(ruleKey, phase, { count: ev.count, idolInPocket: Boolean(ev.withIdol) });
-        targets.forEach((cid) => addItem(result.castawayPoints, cid, { ...item }));
+        const options = { count: ev.count, idolInPocket: Boolean(ev.withIdol), guest: ev.type === "rewardGuest" };
+        const items = ruleKeys
+          .filter((key) => !RULES[key].perCount || ev.count) // an optional count left out scores nothing
+          .map((key) => makeItem(key, phase, options));
+        targets.forEach((cid) => items.forEach((item) => addItem(result.castawayPoints, cid, { ...item })));
         // `points` is what each credited castaway earned from this event.
-        const entry = { type: ev.type, castaways: targets, tribe: ev.tribe || null, count: ev.count || null, points: item.points };
+        const points = items.reduce((sum, item) => sum + item.points, 0);
+        const entry = { type: ev.type, castaways: targets, tribe: ev.tribe || null, count: ev.count || null, points };
         if (ev.type === "votedOut") entry.withIdol = Boolean(ev.withIdol);
         result.timeline.push(entry);
         if (ev.type === "votedOut") targets.forEach(eliminate);
@@ -392,5 +407,14 @@
     return rows;
   }
 
-  return { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER, scoreSeason };
+  return {
+    PHASES,
+    RULES,
+    FINAL_PHASE_SIZE,
+    SOLE_SURVIVOR_PER_CASTAWAY,
+    IDOL_IN_POCKET_MULTIPLIER,
+    REWARD_GUEST_SHARE,
+    guestPoints,
+    scoreSeason,
+  };
 });

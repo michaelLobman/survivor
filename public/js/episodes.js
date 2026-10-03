@@ -164,22 +164,28 @@
           32,
         ),
       );
-    const idolIds = ofType("idolCancel").flatMap((ev) => ev.castaways);
-    const idols = ofType("idolCancel").flatMap((ev) =>
-      ev.castaways.map((id) =>
-        row(
-          person(id, 32),
-          `<span class="text-nowrap small">Idol · ${plural(ev.count, "vote")} cancelled ${UI.pointsHtml(ev.points, "fw-semibold ms-2")}</span>`,
-          32,
-        ),
-      ),
-    );
-    const rows = [...votes, ...idols];
+    // Idols and Shots in the Dark: who was protected, and how many votes it cancelled.
+    const protectionRows = (type, label) =>
+      ofType(type).flatMap((ev) =>
+        ev.castaways.map((id) => {
+          const cancelled = ev.count ? ` · ${plural(ev.count, "vote")} cancelled` : "";
+          return row(
+            person(id, 32),
+            `<span class="text-nowrap small">${label}${cancelled} ${UI.pointsHtml(ev.points, "fw-semibold ms-2")}</span>`,
+            32,
+          );
+        }),
+      );
+    const rows = [...votes, ...protectionRows("idolCancel", "Idol"), ...protectionRows("shotInTheDark", "Shot in the Dark")];
     if (rows.length === 0) return "";
-    const idolLines = idolIds
-      .map((id) => `<p class="probst-line mb-0 mt-2">Any votes cast for ${esc(UI.shortName(id))} will not count.</p>`)
-      .join("");
-    return section("Tribal council", `<p class="probst-line mb-2">I'll read the votes…</p>${list(rows)}${idolLines}`);
+    const probstLines = (type, line) =>
+      ofType(type)
+        .flatMap((ev) => ev.castaways)
+        .map((id) => `<p class="probst-line mb-0 mt-2">${line(esc(UI.shortName(id)))}</p>`)
+        .join("");
+    const idolLines = probstLines("idolCancel", (name) => `Any votes cast for ${name} will not count.`);
+    const shotLines = probstLines("shotInTheDark", (name) => `${name}, you are safe.`);
+    return section("Tribal council", `<p class="probst-line mb-2">I'll read the votes…</p>${list(rows)}${idolLines}${shotLines}`);
   }
 
   function peopleSection(label, types) {
@@ -242,6 +248,7 @@
       ${challengeSections()}
       ${tribalSection()}
       ${peopleSection("Advantages found", ["advantage"])}
+      ${peopleSection("Opted out of a challenge", ["optOut"])}
       ${movesSection()}
       ${individualStarts && !mergeEvent ? section("Phase change", `<span class="small">Immunity is back up for grabs.</span>`) : ""}
     </div></section>`;

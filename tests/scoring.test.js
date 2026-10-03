@@ -121,22 +121,82 @@ test("phase override on an event wins over the derived phase", () => {
   assert.strictEqual(playerTotal(result, 1, "p1"), 20 + 5);
 });
 
-test("rewards: tribe, individual, and chosen guests score differently", () => {
+test("rewards: one rule that scales by phase; a chosen guest gets half, rounded up", () => {
   const result = scoreSeason(
     league({
+      size: 6,
       episodes: [
         { picks: { p1: "c1", p2: "c6" }, events: [{ type: "reward", tribe: "a" }] },
         {
           picks: { p1: "c1", p2: "c6" },
-          events: [{ type: "reward", castaway: "c1" }, { type: "rewardGuest", castaways: ["c6"] }],
+          events: [{ type: "individualGame" }, { type: "reward", castaway: "c1" }, { type: "rewardGuest", castaways: ["c6"] }],
+        },
+        {
+          picks: { p1: "c1", p2: "c6" },
+          events: [
+            { type: "reward", castaway: "c1", phase: "final5" },
+            { type: "rewardGuest", castaway: "c6", phase: "final5" },
+          ],
         },
       ],
     }),
   );
-  assert.strictEqual(playerTotal(result, 1, "p1"), 3 + 5);
-  assert.strictEqual(playerTotal(result, 1, "p2"), 5);
-  assert.strictEqual(playerTotal(result, 2, "p1"), 8 + 5);
-  assert.strictEqual(playerTotal(result, 2, "p2"), 4 + 5);
+  assert.deepStrictEqual(result.errors, []);
+  assert.strictEqual(playerTotal(result, 1, "p1"), 5 + 5); // tribe reward + survived
+  assert.strictEqual(playerTotal(result, 1, "p2"), 5); // survived only
+  assert.strictEqual(playerTotal(result, 2, "p1"), 10 + 10);
+  assert.strictEqual(playerTotal(result, 2, "p2"), 5 + 10);
+  assert.strictEqual(playerTotal(result, 3, "p1"), 15 + 10);
+  assert.strictEqual(playerTotal(result, 3, "p2"), 8 + 10); // half of 15, rounded up
+  const guest = result.episodes[2].castawayPoints.c6.items.find((item) => item.rule === "reward");
+  assert.deepStrictEqual({ guestShare: guest.guestShare, points: guest.points }, { guestShare: 0.5, points: 8 });
+});
+
+test("Shot in the Dark: +5 for being safe, +5 per vote it cancelled, in any phase", () => {
+  const result = scoreSeason(
+    league({
+      episodes: [
+        {
+          picks: { p1: "c1", p2: "c2" },
+          events: [
+            { type: "individualGame" },
+            { type: "shotInTheDark", castaway: "c1", count: 3 },
+            { type: "shotInTheDark", castaway: "c2" },
+            ...bootEvents("c10", 2),
+          ],
+        },
+      ],
+    }),
+  );
+  assert.deepStrictEqual(result.errors, []);
+  assert.strictEqual(playerTotal(result, 1, "p1"), 5 + 15 + 10);
+  assert.strictEqual(playerTotal(result, 1, "p2"), 5 + 10);
+  const shots = result.episodes[0].timeline.filter((ev) => ev.type === "shotInTheDark");
+  assert.deepStrictEqual(shots.map((ev) => [ev.count, ev.points]), [[3, 20], [null, 5]]);
+});
+
+test("Shot in the Dark with a count of zero is a data error (leave count out instead)", () => {
+  const result = scoreSeason(league({ episodes: [{ events: [{ type: "shotInTheDark", castaway: "c1", count: 0 }] }] }));
+  assert.deepStrictEqual(result.errors, ['Episode 1, event 1 (shotInTheDark): needs a positive whole-number "count"']);
+});
+
+test("opting out of a challenge is a flat -10", () => {
+  const result = scoreSeason(
+    league({
+      episodes: [
+        {
+          picks: { p1: "c1", p2: "c2" },
+          events: [
+            { type: "optOut", castaway: "c1" },
+            { type: "optOut", castaway: "c2", phase: "final5" },
+          ],
+        },
+      ],
+    }),
+  );
+  assert.deepStrictEqual(result.errors, []);
+  assert.strictEqual(playerTotal(result, 1, "p1"), -10 + 5);
+  assert.strictEqual(playerTotal(result, 1, "p2"), -10 + 5);
 });
 
 // Picks

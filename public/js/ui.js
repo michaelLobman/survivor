@@ -94,6 +94,7 @@ const UI = (() => {
       details.push(`${Scoring.PHASES[item.phase].label} ×${item.multiplier}`);
     }
     if (item.idolMultiplier) details.push(`Idol in pocket ×${item.idolMultiplier}`);
+    if (item.guestShare) details.push(`Chosen guest ×${item.guestShare === 0.5 ? "½" : item.guestShare}`);
     const multiplier = details.length ? ` <em class="multiplier">${esc(details.join(" · "))}</em>` : "";
     return `<li><span>${esc(item.label)}${multiplier}</span>${pointsHtml(item.points)}</li>`;
   }

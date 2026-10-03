@@ -48,11 +48,13 @@ castaways are left.
 | Event | Example | Notes |
 |---|---|---|
 | Immunity | `{ type: "immunity", tribe: "savu" }` or `{ type: "immunity", castaway: "kilby" }` | Tribe or individual |
-| Reward | `{ type: "reward", tribe: "toka" }` or `{ type: "reward", castaway: "ana" }` | Tribe reward or individual reward win |
-| Chosen for reward | `{ type: "rewardGuest", castaways: ["ori", "rob"] }` | |
+| Reward | `{ type: "reward", tribe: "toka" }` or `{ type: "reward", castaway: "ana" }` | Tribe or individual reward win |
+| Chosen for reward | `{ type: "rewardGuest", castaways: ["ori", "rob"] }` | Taken along on someone else's reward: half the reward points |
 | Found advantage | `{ type: "advantage", castaway: "jelly" }` | Idols, extra votes, journey prizes |
 | Votes against | `{ type: "votesAgainst", castaway: "jenna", count: 2 }` | Votes that counted |
 | Idol cancels votes | `{ type: "idolCancel", castaway: "devin", count: 4 }` | Credited to the castaway the idol protected; don't also enter those votes as votes against |
+| Shot in the Dark | `{ type: "shotInTheDark", castaway: "ori", count: 3 }` | Only when it worked (they were safe). `count` is votes cancelled; leave it out if none. Don't also enter those votes as votes against |
+| Opted out | `{ type: "optOut", castaway: "kilby" }` | Sat out a challenge, journey, or risk-a-vote by choice. Once per time they opt out |
 | Voted out | `{ type: "votedOut", castaway: "aaliyah" }` | Also use for fire-making losses. Add `withIdol: true` if they left with an idol in their pocket (double penalty) |
 | Left the game | `{ type: "leftGame", castaway: "rob" }` | Quit / medevac: no points either way |
 | Tribe swap | `{ type: "moveTribe", castaways: ["lewis", "ori"], tribe: "toka" }` | `tribe` is where they move to; one event per destination tribe |
@@ -71,6 +73,17 @@ Castaways page. If the merged tribe isn't named yet, use a placeholder such as
 `{ id: "merged", name: "Merged", color: "#2E9E8F" }` and change only its `name`
 and `color` once it's named. Every page looks tribes up by `id`, so the new name
 shows everywhere, past episodes included.
+
+Judgment calls (also listed on the rules page):
+- **Opted out** is only for a castaway's own choice (taking food to sit out,
+  declining to risk a vote or a journey). A sit-out forced by uneven tribes
+  isn't entered.
+- **Food for sitting out** is entered as `optOut` only, never as a reward.
+- **Reward placings:** enter a `reward` for every tribe or castaway that wins
+  something (1st and 2nd place both score in full).
+- **Reward given away:** the winner still gets the `reward`; whoever goes in
+  their place is a `rewardGuest`.
+- **Failed Shot in the Dark:** enter nothing.
 
 Shortcuts and overrides:
 - **Tribe with exceptions:** `{ type: "immunity", tribe: "savu", except: ["ori"] }`

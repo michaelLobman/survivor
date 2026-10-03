@@ -31,19 +31,34 @@ the voted-out penalty is early-weighted (3x / 2x / 1x).
 | Survived episode | +5 | +5 | +10 | +15 |
 | Immunity (tribe or individual) | +10 | +10 | +20 | +30 |
 | Found advantage (idol, extra vote, journey prize, etc.) | +5 | +5 | +10 | +15 |
-| Tribe reward win | +3 | +3 | +6 | +9 |
-| Individual reward win | +8 | +8 | +16 | +24 |
-| Chosen for reward | +4 | +4 | +8 | +12 |
+| Reward win (tribe or individual) | +5 | +5 | +10 | +15 |
+| Chosen for reward (half of a reward win, rounded up) | | +3 | +5 | +8 |
 | Voted out (early-weighted) | −10 | −30 | −20 | −10 |
 | Voted out holding an idol (×2 voted-out penalty) | −20 | −60 | −40 | −20 |
 | Votes against (flat) | −2 per vote | | | |
 | Idol cancels votes (flat) | +5 per vote cancelled | | | |
+| Safe with Shot in the Dark (flat) | +5, plus +5 per vote cancelled | | | |
+| Opted out of a challenge, journey, risk-a-vote, etc. (flat) | −10 each time | | | |
 
 **Sole Survivor bonus:** paid at the finale for every weekly pick of the eventual
 winner, worth 1 × castaways remaining when that week's picks locked
 (e.g. +18 in episode 1, +4 at the finale).
 
 Values should be stored as data (not hard-coded) so they can be retuned.
+
+**Judgment calls:**
+- Opting out means a voluntary choice (food to sit out, declining to risk a vote
+  or a journey). A sit-out forced by uneven tribes doesn't count.
+- Food for sitting out is only the opt-out penalty, not a reward.
+- Every reward placing (1st/2nd, big/small) scores the full reward.
+- A winner who gives a reward away keeps the full points; whoever goes in their
+  place scores as a chosen guest.
+- A failed Shot in the Dark scores nothing either way.
+- The new rules apply to the whole season, including episodes already scored.
+
+Rewards were simplified to one phase-scaled rule (previously tribe +3, individual
++8, guest +4), and Shot in the Dark and opt-outs were added, after episode 2.
+The calibration below predates those changes.
 
 **Calibration:** 4,000 simulated seasons shaped like Survivor 47. An "early
 believer" (winner every week of the tribe game, random after) averaged 331; a
