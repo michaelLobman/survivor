@@ -61,6 +61,17 @@ test("voted out in the tribe game with 4 votes = -38", () => {
   assert.strictEqual(playerTotal(result, 1, "p1"), -38);
 });
 
+test("voted out holding an idol doubles the penalty: tribe game with 4 votes = -68", () => {
+  const events = [
+    { type: "votesAgainst", castaway: "c10", count: 4 },
+    { type: "votedOut", castaway: "c10", withIdol: true },
+  ];
+  const result = scoreSeason(league({ episodes: [{ picks: { p1: "c10" }, events }] }));
+  assert.deepStrictEqual(result.errors, []);
+  assert.strictEqual(playerTotal(result, 1, "p1"), -68);
+  assert.strictEqual(result.castaways.c10.active, false);
+});
+
 test("voted out with 6 left is individual game (-20); survivors of that boot are final 5", () => {
   const result = scoreSeason(
     league({

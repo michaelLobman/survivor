@@ -30,6 +30,7 @@
     reward: { label: "Individual reward win", points: 8, weight: "late" },
     rewardGuest: { label: "Chosen for reward", points: 4, weight: "late" },
     votedOut: { label: "Voted out", points: -10, weight: "early" },
+    votedOutWithIdol: { label: "Voted out holding an idol", points: -20, weight: "early" },
     votesAgainst: { label: "Votes against", points: -2, weight: "flat", perCount: true },
     idolCancel: { label: "Idol cancels votes", points: 5, weight: "flat", perCount: true },
   };
@@ -50,6 +51,13 @@
   ]);
   // Event types that change game state instead of scoring points.
   const STATE_EVENTS = new Set(["moveTribe", "individualGame", "leftGame", "soleSurvivor"]);
+
+  // Some event types score under a variant rule, chosen by the event's details.
+  function scoringRuleKey(ev) {
+    if (ev.type === "reward" && ev.tribe) return "tribeReward";
+    if (ev.type === "votedOut" && ev.withIdol) return "votedOutWithIdol";
+    return ev.type;
+  }
 
   function makeItem(ruleKey, phaseKey, count) {
     const rule = RULES[ruleKey];
@@ -263,7 +271,7 @@
           errors.push(`${at}: unknown event type`);
           return;
         }
-        const ruleKey = ev.type === "reward" && ev.tribe ? "tribeReward" : ev.type;
+        const ruleKey = scoringRuleKey(ev);
         const rule = RULES[ruleKey];
         if (rule.perCount && !(Number.isInteger(ev.count) && ev.count > 0)) {
           errors.push(`${at}: needs a positive whole-number "count"`);
@@ -279,7 +287,9 @@
         const item = makeItem(ruleKey, phase, ev.count);
         targets.forEach((cid) => addItem(result.castawayPoints, cid, { ...item }));
         // `points` is what each credited castaway earned from this event.
-        result.timeline.push({ type: ev.type, castaways: targets, tribe: ev.tribe || null, count: ev.count || null, points: item.points });
+        const entry = { type: ev.type, castaways: targets, tribe: ev.tribe || null, count: ev.count || null, points: item.points };
+        if (ev.type === "votedOut") entry.withIdol = Boolean(ev.withIdol);
+        result.timeline.push(entry);
         if (ev.type === "votedOut") targets.forEach(eliminate);
       });
 

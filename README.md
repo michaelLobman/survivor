@@ -53,7 +53,7 @@ castaways are left.
 | Found advantage | `{ type: "advantage", castaway: "jelly" }` | Idols, extra votes, journey prizes |
 | Votes against | `{ type: "votesAgainst", castaway: "jenna", count: 2 }` | Votes that counted |
 | Idol cancels votes | `{ type: "idolCancel", castaway: "devin", count: 4 }` | Credited to the castaway the idol protected; don't also enter those votes as votes against |
-| Voted out | `{ type: "votedOut", castaway: "aaliyah" }` | Also use for fire-making losses |
+| Voted out | `{ type: "votedOut", castaway: "aaliyah" }` | Also use for fire-making losses. Add `withIdol: true` if they left with an idol in their pocket (double penalty) |
 | Left the game | `{ type: "leftGame", castaway: "rob" }` | Quit / medevac: no points either way |
 | Tribe swap | `{ type: "moveTribe", castaways: ["lewis", "ori"], tribe: "toka" }` | `tribe` is where they move to; one event per destination tribe |
 | Individual game starts | `{ type: "individualGame" }` | Add once, at the point immunity becomes individual |

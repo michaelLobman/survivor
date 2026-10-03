@@ -125,7 +125,7 @@
         const votes = tally[id] || { votes: 0, points: 0 };
         const parts = [];
         if (votes.votes) parts.push(`${plural(votes.votes, "vote")} ${UI.pointsHtml(votes.points)}`);
-        if (voted) parts.push(`voted out ${UI.pointsHtml(ev.points)}`);
+        if (voted) parts.push(`${ev.withIdol ? "voted out holding an idol" : "voted out"} ${UI.pointsHtml(ev.points)}`);
         const total = voted ? ev.points + votes.points : null;
         return `<div class="dash-section d-flex align-items-center gap-3">
           <a class="is-out" href="${UI.castawayHref(id)}" tabindex="-1" aria-hidden="true">${UI.avatar(id, 64)}</a>
