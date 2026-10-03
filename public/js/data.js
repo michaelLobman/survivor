@@ -3,7 +3,7 @@
  * weekly routine and every event type.
  */
 const LEAGUE = {
-  name: "Survivor Fantasy",
+  name: "The League Has Spoken",
   tagline: "Outwit, Outplay, Outclass",
 
   players: [

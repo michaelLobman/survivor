@@ -1,4 +1,4 @@
-# Survivor Fantasy League — Design
+# The League Has Spoken — Design
 
 Living record of design decisions. Implementation follows this document.
 

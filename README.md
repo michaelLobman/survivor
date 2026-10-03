@@ -1,4 +1,4 @@
-# Survivor Fantasy League
+# The League Has Spoken
 
 A static scoreboard for our Survivor league: standings, itemized episode
 results, castaways, and rules. Plain HTML, Bootstrap 5, and vanilla JS, with no
