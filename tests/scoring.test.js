@@ -70,6 +70,17 @@ test("voted out holding an idol doubles the penalty: tribe game with 4 votes = -
   assert.deepStrictEqual(result.errors, []);
   assert.strictEqual(playerTotal(result, 1, "p1"), -68);
   assert.strictEqual(result.castaways.c10.active, false);
+  const votedOut = result.episodes[0].castawayPoints.c10.items.filter((item) => item.rule === "votedOut");
+  assert.deepStrictEqual(
+    votedOut.map(({ multiplier, idolMultiplier, points }) => ({ multiplier, idolMultiplier, points })),
+    [{ multiplier: 3, idolMultiplier: 2, points: -60 }],
+  );
+});
+
+test("withIdol on anything but votedOut is a data error", () => {
+  const events = [{ type: "immunity", castaway: "c1", withIdol: true }, ...bootEvents("c10", 4)];
+  const result = scoreSeason(league({ episodes: [{ events }] }));
+  assert.deepStrictEqual(result.errors, ['Episode 1, event 1 (immunity): "withIdol" only applies to votedOut']);
 });
 
 test("voted out with 6 left is individual game (-20); survivors of that boot are final 5", () => {

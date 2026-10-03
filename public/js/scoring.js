@@ -30,13 +30,15 @@
     reward: { label: "Individual reward win", points: 8, weight: "late" },
     rewardGuest: { label: "Chosen for reward", points: 4, weight: "late" },
     votedOut: { label: "Voted out", points: -10, weight: "early" },
-    votedOutWithIdol: { label: "Voted out holding an idol", points: -20, weight: "early" },
     votesAgainst: { label: "Votes against", points: -2, weight: "flat", perCount: true },
     idolCancel: { label: "Idol cancels votes", points: 5, weight: "flat", perCount: true },
   };
 
   // Sole Survivor bonus per weekly pick = this x castaways in the game at lock.
   const SOLE_SURVIVOR_PER_CASTAWAY = 1;
+
+  // A castaway voted out with an idol in their pocket takes this x the voted-out penalty.
+  const IDOL_IN_POCKET_MULTIPLIER = 2;
 
   // Event types the data file may use. "reward" with a tribe scores as tribeReward;
   // "survived" is never entered, it is computed at the end of each episode.
@@ -52,16 +54,12 @@
   // Event types that change game state instead of scoring points.
   const STATE_EVENTS = new Set(["moveTribe", "individualGame", "leftGame", "soleSurvivor"]);
 
-  // Some event types score under a variant rule, chosen by the event's details.
-  function scoringRuleKey(ev) {
-    if (ev.type === "reward" && ev.tribe) return "tribeReward";
-    if (ev.type === "votedOut" && ev.withIdol) return "votedOutWithIdol";
-    return ev.type;
-  }
-
-  function makeItem(ruleKey, phaseKey, count) {
+  // `idolInPocket` applies only to votedOut; it is kept apart from the phase
+  // multiplier so breakdowns can show both.
+  function makeItem(ruleKey, phaseKey, { count = null, idolInPocket = false } = {}) {
     const rule = RULES[ruleKey];
     const multiplier = rule.weight === "flat" ? 1 : PHASES[phaseKey][rule.weight];
+    const idolMultiplier = idolInPocket ? IDOL_IN_POCKET_MULTIPLIER : null;
     const times = rule.perCount ? count : 1;
     return {
       rule: ruleKey,
@@ -69,8 +67,9 @@
       weight: rule.weight,
       phase: phaseKey,
       multiplier,
+      idolMultiplier,
       count: rule.perCount ? count : null,
-      points: rule.points * multiplier * times,
+      points: rule.points * multiplier * (idolMultiplier || 1) * times,
     };
   }
 
@@ -271,10 +270,14 @@
           errors.push(`${at}: unknown event type`);
           return;
         }
-        const ruleKey = scoringRuleKey(ev);
+        const ruleKey = ev.type === "reward" && ev.tribe ? "tribeReward" : ev.type;
         const rule = RULES[ruleKey];
         if (rule.perCount && !(Number.isInteger(ev.count) && ev.count > 0)) {
           errors.push(`${at}: needs a positive whole-number "count"`);
+          return;
+        }
+        if (ev.withIdol && ev.type !== "votedOut") {
+          errors.push(`${at}: "withIdol" only applies to votedOut`);
           return;
         }
         if (ev.phase && !PHASES[ev.phase]) {
@@ -284,7 +287,7 @@
 
         const phase = ev.phase || currentPhase();
         const targets = resolveTargets(ev, at);
-        const item = makeItem(ruleKey, phase, ev.count);
+        const item = makeItem(ruleKey, phase, { count: ev.count, idolInPocket: Boolean(ev.withIdol) });
         targets.forEach((cid) => addItem(result.castawayPoints, cid, { ...item }));
         // `points` is what each credited castaway earned from this event.
         const entry = { type: ev.type, castaways: targets, tribe: ev.tribe || null, count: ev.count || null, points: item.points };
@@ -389,5 +392,5 @@
     return rows;
   }
 
-  return { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, scoreSeason };
+  return { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER, scoreSeason };
 });

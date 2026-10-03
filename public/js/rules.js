@@ -1,16 +1,26 @@
 // Rules: generated from the scoring engine's tables, so the page can't drift from the math.
 (() => {
-  const { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY } = Scoring;
+  const { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER } = Scoring;
   const app = document.getElementById("app");
   const phaseKeys = Object.keys(PHASES);
 
   const tiered = Object.values(RULES).filter((r) => r.weight !== "flat");
   const flat = Object.values(RULES).filter((r) => r.weight === "flat");
 
+  // Voted out also shows the idol-in-pocket penalty, as a grey second line in the same cells.
+  const idolLine = (text) => `<br><em class="multiplier tabular">${text}</em>`;
   const tieredRows = tiered
     .map((r) => {
-      const cells = phaseKeys.map((k) => `<td class="text-end">${UI.pointsHtml(r.points * PHASES[k][r.weight])}</td>`).join("");
-      return `<tr><td>${r.label}</td>${cells}</tr>`;
+      const withIdol = r === RULES.votedOut;
+      const cells = phaseKeys
+        .map((k) => {
+          const points = r.points * PHASES[k][r.weight];
+          const idol = withIdol ? idolLine(UI.points(points * IDOL_IN_POCKET_MULTIPLIER)) : "";
+          return `<td class="text-end text-nowrap">${UI.pointsHtml(points)}${idol}</td>`;
+        })
+        .join("");
+      const label = withIdol ? `${r.label}${idolLine(`×${IDOL_IN_POCKET_MULTIPLIER} with idol`)}` : r.label;
+      return `<tr><td>${label}</td>${cells}</tr>`;
     })
     .join("");
   const flatRows = flat

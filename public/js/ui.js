@@ -88,12 +88,13 @@ const UI = (() => {
   // One line of an itemized breakdown, e.g. "Immunity Individual game ×2   +20",
   // with the multiplier in muted italics.
   function breakdownItem(item) {
-    let detail = "";
-    if (item.count) detail = `×${item.count}`;
+    const details = [];
+    if (item.count) details.push(`×${item.count}`);
     else if (item.weight === "late" || item.weight === "early") {
-      detail = `${Scoring.PHASES[item.phase].label} ×${item.multiplier}`;
+      details.push(`${Scoring.PHASES[item.phase].label} ×${item.multiplier}`);
     }
-    const multiplier = detail ? ` <em class="multiplier">${esc(detail)}</em>` : "";
+    if (item.idolMultiplier) details.push(`Idol in pocket ×${item.idolMultiplier}`);
+    const multiplier = details.length ? ` <em class="multiplier">${esc(details.join(" · "))}</em>` : "";
     return `<li><span>${esc(item.label)}${multiplier}</span>${pointsHtml(item.points)}</li>`;
   }
 

@@ -35,7 +35,7 @@ the voted-out penalty is early-weighted (3x / 2x / 1x).
 | Individual reward win | +8 | +8 | +16 | +24 |
 | Chosen for reward | +4 | +4 | +8 | +12 |
 | Voted out (early-weighted) | −10 | −30 | −20 | −10 |
-| Voted out holding an idol (early-weighted) | −20 | −60 | −40 | −20 |
+| Voted out holding an idol (×2 voted-out penalty) | −20 | −60 | −40 | −20 |
 | Votes against (flat) | −2 per vote | | | |
 | Idol cancels votes (flat) | +5 per vote cancelled | | | |
 
