@@ -116,11 +116,17 @@ averaged 338; a random picker averaged 224.
 Mobile-first.
 - **Home:** this week's pick card on top (current pick + countdown to lock, or a
   "Pick now" prompt), league standings below with movement since last episode.
-- **Winner bonus at stake:** while the game is on, each standings card shows the
-  bonus a player has banked on castaways still in ("+108 if Kilby wins"), and
-  each castaway page lists what their win would pay each player. Raw points
-  only, no projected ranks (tried, found confusing). It keeps trailing players
-  invested, since the bonus isn't in the standings until the finale.
+- **Standings cards:** collapsed, a muted line shows the player's biggest
+  Sole Survivor bonus at stake ("+108 if Kilby wins"). Opened, the card leads
+  with the Sole Survivor Bonus (every castaway still in they've backed: times
+  picked and bonus banked; after the finale, the bonus paid), then the last
+  three weeks with the rest behind "All N weeks". Each week links to that
+  episode with the player's itemized score open. Raw points only, no projected
+  ranks (tried, found confusing); best-episode and average tiles were cut.
+  The bonus keeps trailing players invested, since it isn't in the standings
+  until the finale.
+- **Castaway page:** "Picked by" lists each player's weeks, points earned, and
+  (while the castaway is in) the bonus their win would pay.
 - **Pick screen:** each castaway card shows photo, name, tribe badge, season
   points so far, this week's Sole Survivor bonus ("+14 if they win"), and the
   player's history with them (times picked, points earned). Eliminated

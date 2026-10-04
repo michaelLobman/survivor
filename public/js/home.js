@@ -121,78 +121,70 @@
 
   // --- Player cards ---
 
-  // Per-player numbers derived from the scored season.
-  function statsFor(row) {
-    const playerId = row.player.id;
-    const scored = completed.filter((e) => e.picks[playerId]);
-    const { best, average } = UI.bestAndAverage(scored.map((e) => ({ episode: e, points: e.playerPoints[playerId].total })));
+  // How many recent weeks an open card shows before "All N weeks".
+  const RECENT_WEEKS = 3;
 
-    const byCastaway = {};
-    for (const e of scored) {
-      const id = e.picks[playerId].castaway;
-      byCastaway[id] = byCastaway[id] || { id, count: 0, points: 0 };
-      byCastaway[id].count += 1;
-      byCastaway[id].points += e.castawayPoints[id]?.total || 0;
-    }
-    const favorites = Object.values(byCastaway).sort((a, b) => b.count - a.count || b.points - a.points);
-    const winnerPicks = season.winner ? row.winnerPicks : null;
-    return { best, average, favorites, winnerPicks };
-  }
-
-  function statsRow(stats) {
-    const cells = [
-      UI.statTile("Best episode", stats.best ? `${UI.pointsHtml(stats.best.points)} <span class="eyebrow">Ep ${stats.best.episode.number}</span>` : "–"),
-      UI.statTile("Average", stats.average === null ? "–" : UI.pointsHtml(stats.average)),
-    ];
-    if (stats.winnerPicks !== null) cells.push(UI.statTile("Picked the winner", `${stats.winnerPicks}×`));
-    return `<div class="player-stats">${cells.join("")}</div>`;
-  }
-
-  // Castaways picked more than once; a single pick is already in the pick history.
-  function favoritesSection(stats) {
-    const repeats = stats.favorites.filter((f) => f.count > 1);
-    if (repeats.length === 0) return "";
-    const chips = repeats
-      .map(
-        (f) => `<span class="d-inline-flex align-items-center gap-2">${UI.pickChip({ castaway: f.id }, 28, { ...QUIET, link: true })}
-          <span class="small text-nowrap">×${f.count} ${UI.pointsHtml(f.points)}</span></span>`,
-      )
-      .join("");
-    return `<div class="mt-3"><div class="eyebrow mb-2">Most picked</div><div class="d-flex flex-wrap gap-3">${chips}</div></div>`;
-  }
-
-  // Each past episode: pick and points, expanding to the itemized breakdown and a
-  // link to the episode. The link stays out of <summary> so a row has one tap target.
-  function historyRow(e, playerId) {
-    const pick = e.picks[playerId];
-    const score = e.playerPoints[playerId];
-    const head = `<span class="history-ep eyebrow">Ep ${e.number}</span>
-      <span class="flex-grow-1">${UI.pickChip(pick, 28, QUIET)}</span>
-      ${UI.pointsHtml(score.total, "fw-semibold")}`;
-    if (score.items.length === 0) {
-      return `<li class="history-row d-flex align-items-center gap-3">${head}<span class="chevron-spacer"></span></li>`;
-    }
-    return `<li class="history-row">
-      <details class="expandable">
-        <summary class="d-flex align-items-center gap-3">${head}<span class="chevron" aria-hidden="true">›</span></summary>
-        <div class="history-breakdown pe-4 mt-2 mb-1">
-          <ul class="list-unstyled breakdown mb-2">${score.items.map(UI.breakdownItem).join("")}</ul>
-          <div class="d-flex flex-wrap gap-2">${UI.episodeLink(e.number, "See episode")}${pick ? UI.castawayLink(pick.castaway) : ""}</div>
-        </div>
-      </details>
-    </li>`;
-  }
-
-  function historySection(playerId) {
-    // Completed episodes only; upcoming picks are on the episode card.
-    const rows = completed
+  // Every scored week the league picked, newest first, with this player's pick (or none).
+  // Points are what the pick scored; the Sole Survivor Bonus has its own section.
+  const weeksFor = (playerId) =>
+    completed
       .filter((e) => e.hasPicks)
       .reverse()
-      .map((e) => historyRow(e, playerId));
-    const body = rows.length
-      ? `<ul class="list-unstyled mb-0">${rows.join("")}</ul>`
-      : `<p class="small text-body-secondary fst-italic mb-0">N/A</p>`;
-    return `<div class="mt-3"><div class="eyebrow mb-1">Pick history</div>${body}</div>`;
+      .map((e) => {
+        const pick = e.picks[playerId];
+        return { episode: e, pick, points: pick ? e.castawayPoints[pick.castaway]?.total || 0 : 0 };
+      });
+
+  // One week: the pick and its points, linking to that episode with this player's score open.
+  const weekRow = (week, playerId) => `<li class="week-item">
+    <a class="week-row" href="episodes.html?ep=${week.episode.number}#${encodeURIComponent(playerId)}">
+      <span class="history-ep eyebrow">Ep ${week.episode.number}</span>
+      <span class="flex-grow-1 min-w-0">${UI.pickChip(week.pick, 28, QUIET)}</span>
+      ${UI.pointsHtml(week.points, "fw-semibold")}
+      <span class="chevron" aria-hidden="true">›</span>
+    </a>
+  </li>`;
+
+  // The latest weeks, with older ones behind a button so the card stays short all season.
+  function weeksSection(playerId) {
+    const weeks = weeksFor(playerId);
+    const rows = (list) => list.map((week) => weekRow(week, playerId)).join("");
+    const older = weeks.slice(RECENT_WEEKS);
+    const more = older.length
+      ? `<details class="more-weeks">
+          <summary class="ep-link mt-2">All ${weeks.length} weeks<span class="ep-link-arrow" aria-hidden="true">›</span></summary>
+          <ul class="list-unstyled mb-0">${rows(older)}</ul>
+        </details>`
+      : "";
+    return `<div class="mt-3">
+      <div class="eyebrow mb-1">${weeks.length > 1 ? "Recent weeks" : "Last week"}</div>
+      <ul class="list-unstyled mb-0">${rows(weeks.slice(0, RECENT_WEEKS))}</ul>
+      ${more}
+    </div>`;
+  }
+
+  const stakeRow = (castawayId, picks, points) => `<li>
+    ${UI.pickChip({ castaway: castawayId }, 28, { ...QUIET, link: true })}
+    <span class="small text-body-secondary text-nowrap">picked ${picks}×</span>
+    ${UI.pointsHtml(points, "fw-semibold")}
+  </li>`;
+
+  // While the game is on: the bonus banked on each castaway still in. After the
+  // finale: what the player was paid for picking the winner.
+  function soleSurvivorBonus(playerId) {
+    let rows;
+    let note = "";
+    if (season.winner) {
+      const paid = completed.flatMap((e) => e.playerPoints[playerId].items).filter((item) => item.rule === "soleSurvivor");
+      if (paid.length === 0) return "";
+      rows = stakeRow(season.winner, paid.length, paid.reduce((sum, item) => sum + item.points, 0));
+    } else {
+      const stakes = season.winnerStakes[playerId];
+      if (stakes.length === 0) return "";
+      rows = stakes.map((s) => stakeRow(s.castaway, s.picks, s.points)).join("");
+      note = `<p class="small text-body-secondary mb-0 mt-1">Paid at the finale if they win.</p>`;
+    }
+    return `<div class="eyebrow mb-1">Sole Survivor Bonus</div><ul class="stake-list">${rows}</ul>${note}`;
   }
 
   // Places gained or lost since last episode; nothing when unchanged.
@@ -222,32 +214,10 @@
     return `<span class="d-block small text-body-secondary">${UI.points(top.points)} if ${esc(UI.shortName(top.castaway))} wins</span>`;
   }
 
-  // Every castaway still in the game the player has backed: times picked and the
-  // bonus it would pay at the finale.
-  function stakesSection(playerId) {
-    const stakes = season.winnerStakes[playerId];
-    if (stakes.length === 0) return "";
-    const rows = stakes
-      .map(
-        (s) => `<li>
-          ${UI.pickChip({ castaway: s.castaway }, 28, { ...QUIET, link: true })}
-          <span class="small text-body-secondary text-nowrap">${s.picks}×</span>
-          ${UI.pointsHtml(s.points, "fw-semibold")}
-        </li>`,
-      )
-      .join("");
-    return `<div class="mt-3">
-      <div class="eyebrow mb-1">Winner bonus at stake</div>
-      <ul class="stake-list">${rows}</ul>
-      <p class="small text-body-secondary mb-0 mt-1">Paid at the finale if they win.</p>
-    </div>`;
-  }
-
   function playerCard(row) {
     const { player } = row;
-    const stats = statsFor(row);
-    // Collapsed: rank, name, total. Expanded: stats, pick history (newest first, so the
-    // previous episode leads), and most-picked castaways. Upcoming picks are on the episode card.
+    // Collapsed: rank, name, total, biggest bonus at stake. Expanded: the Sole Survivor
+    // Bonus, then recent weeks. Upcoming picks are on the episode card.
     return `<details class="card expandable standings-row mb-2${rowState(row)}" id="${esc(player.id)}">
       <summary class="card-body standings-summary">
         <span class="standings-rank tabular">${rankLabel(row.rank)}</span>
@@ -256,10 +226,8 @@
         <span class="chevron" aria-hidden="true">›</span>
       </summary>
       <div class="card-body pt-0">
-        ${statsRow(stats)}
-        ${stakesSection(player.id)}
-        ${historySection(player.id)}
-        ${favoritesSection(stats)}
+        ${soleSurvivorBonus(player.id)}
+        ${weeksSection(player.id)}
       </div>
     </details>`;
   }

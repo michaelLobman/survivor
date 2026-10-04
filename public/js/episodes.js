@@ -149,8 +149,7 @@
     ["immunity", "Immunity"],
   ];
   function challengeSections() {
-    const sections = CHALLENGE_TYPES.map(([type, label]) => section(label, groupList(ofType(type).map(challengeRow)))).join("");
-    return sections ? `<p class="probst-line mb-2">Let's get it on!</p>${sections}` : "";
+    return CHALLENGE_TYPES.map(([type, label]) => section(label, groupList(ofType(type).map(challengeRow)))).join("");
   }
 
   function tribalSection() {
@@ -256,11 +255,13 @@
 
   // One expandable score row: summary on top, itemized points inside.
   // `castawayId` adds a link to that castaway's page under the breakdown.
-  function scoreCard({ summary, score, castawayId = null, extraClass = "" }) {
+  // `id` lets a link open this card (episodes.html?ep=5#mike).
+  function scoreCard({ summary, score, castawayId = null, extraClass = "", id = "" }) {
+    const idAttr = id ? ` id="${esc(id)}"` : "";
     if (score.items.length === 0) {
-      return `<div class="card mb-2${extraClass}"><div class="card-body d-flex align-items-center gap-3">${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron-spacer"></span></div></div>`;
+      return `<div${idAttr} class="card mb-2${extraClass}"><div class="card-body d-flex align-items-center gap-3">${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron-spacer"></span></div></div>`;
     }
-    return `<details class="card expandable mb-2${extraClass}">
+    return `<details${idAttr} class="card expandable mb-2${extraClass}">
       <summary class="card-body d-flex align-items-center gap-3">
         ${summary}${UI.pointsHtml(score.total, "fs-5 fw-semibold")}<span class="chevron" aria-hidden="true">›</span>
       </summary>
@@ -283,6 +284,7 @@
       .map(({ player, pick, score }, i) =>
         (i === topCount ? divider : "") +
         scoreCard({
+          id: player.id,
           score,
           castawayId: pick?.castaway,
           summary: `<span class="flex-grow-1 min-w-0">
@@ -352,6 +354,13 @@
       });
     }),
   );
+
+  // Links like episodes.html?ep=5#mike open that player's score.
+  const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (target) {
+    if (target.tagName === "DETAILS") target.open = true;
+    target.scrollIntoView({ block: "center" });
+  }
 
   // Close the episode list when tapping anywhere else, or on Escape.
   const menu = document.querySelector(".ep-menu");

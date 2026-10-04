@@ -770,7 +770,33 @@ a.pick-chip:active .avatar {
   }
 }
 
-/* Winner bonus at stake: castaway, times picked, and points line up in columns. */
+/* Player card weeks: each row links to that episode. */
+.week-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  color: inherit;
+  text-decoration: none;
+}
+/* Dividers sit on the list items so the row's rounded press tint doesn't bend them. */
+.week-item + .week-item,
+.more-weeks .week-item {
+  border-top: 1px solid var(--bs-border-color);
+}
+/* Older weeks continue the same list once "All N weeks" is tapped. */
+.more-weeks > summary {
+  display: inline-flex;
+  list-style: none;
+  cursor: pointer;
+}
+.more-weeks > summary::-webkit-details-marker {
+  display: none;
+}
+.more-weeks[open] > summary {
+  display: none;
+}
+/* Sole Survivor Bonus: castaway | times picked | points, points right-aligned. */
 .stake-list {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -788,4 +814,35 @@ a.pick-chip:active .avatar {
 }
 .stake-list .pick-chip {
   justify-self: start;
+}
+.stake-list .pts {
+  justify-self: end;
+}
+/* Picked by (castaway page): player | weeks | earned | bonus */
+.pick-table-head {
+  padding-bottom: 0.25rem;
+}
+.picked-by-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3rem 3.25rem;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+.picked-by-table.has-bonus {
+  grid-template-columns: minmax(0, 1fr) 3rem 3.25rem 3.5rem;
+}
+/* Week rows tint like pick history rows did: a ring past their edges, no movement. */
+.week-row {
+  border-radius: 0.5rem;
+  transition: box-shadow var(--hover-timing), background-color var(--hover-timing);
+}
+.week-row:active {
+  background-color: var(--press-tint);
+  box-shadow: 0 0 0 0.4rem var(--press-tint);
+}
+@media (hover: hover) and (pointer: fine) {
+  .week-row:hover {
+    background-color: var(--press-tint);
+    box-shadow: 0 0 0 0.4rem var(--press-tint);
+  }
 }

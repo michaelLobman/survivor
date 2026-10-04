@@ -91,55 +91,56 @@
     const body = played.length
       ? `<ul class="list-unstyled mb-0">${played.map(episodeRow).join("")}</ul>`
       : `<p class="small text-body-secondary mb-0">No episodes scored yet.</p>`;
-    return `<h2 class="section-title mb-2">Episode by episode</h2>
+    return `<h2 class="section-title mb-2">Episodes</h2>
       <section class="card mb-4"><div class="card-body">${body}</div></section>`;
   }
 
-  // Each player who picked this castaway: how often, and what those weeks earned them.
+  // Winner bonus column: banked so far while they're in, paid if they won, absent otherwise.
+  function bonusFor(playerId) {
+    if (stats.active && !season.winner) return season.winnerStakes[playerId].find((s) => s.castaway === id)?.points ?? 0;
+    if (season.winner !== id) return null;
+    return completed
+      .flatMap((e) => e.playerPoints[playerId].items)
+      .filter((item) => item.rule === "soleSurvivor")
+      .reduce((sum, item) => sum + item.points, 0);
+  }
+
+  // Each player who picked this castaway: how often, what those weeks earned, and the winner bonus.
   function pickedBySection() {
     const rows = LEAGUE.players
       .map((p) => {
         const weeks = completed.filter((e) => pickedIn(e, p.id));
-        return { player: p, count: weeks.length, points: weeks.reduce((sum, e) => sum + e.playerPoints[p.id].total, 0) };
+        const earned = weeks.reduce((sum, e) => sum + e.castawayPoints[id].total, 0);
+        return { player: p, count: weeks.length, earned, bonus: bonusFor(p.id) };
       })
       .filter((r) => r.count > 0)
-      .sort((a, b) => b.count - a.count || b.points - a.points)
+      .sort((a, b) => b.count - a.count || b.earned - a.earned);
+    const showBonus = rows.some((r) => r.bonus !== null);
+    const columns = showBonus ? "picked-by-table has-bonus" : "picked-by-table";
+    const head = `<div class="${columns} pick-table-head eyebrow" aria-hidden="true">
+      <span>Player</span><span class="text-end">Weeks</span><span class="text-end">Earned</span>${showBonus ? `<span class="text-end">Bonus</span>` : ""}
+    </div>`;
+    const list = rows
       .map(
-        (r) => `<li class="d-flex align-items-center justify-content-between gap-3 py-1">
-          <a class="castaway-link fw-semibold" href="index.html#${esc(r.player.id)}">${esc(r.player.name)}</a>
-          <span class="text-nowrap small">${plural(r.count, "week")} ${UI.pointsHtml(r.points, "fw-semibold ms-2")}</span>
+        (r) => `<li class="${columns} py-1">
+          <a class="castaway-link fw-semibold min-w-0 text-truncate" href="index.html#${esc(r.player.id)}">${esc(r.player.name)}</a>
+          <span class="small text-body-secondary text-end">${r.count}</span>
+          <span class="text-end">${UI.pointsHtml(r.earned, "fw-semibold")}</span>
+          ${showBonus ? `<span class="text-end">${UI.pointsHtml(r.bonus)}</span>` : ""}
         </li>`,
-      );
+      )
+      .join("");
+    const bonusNote = showBonus && !season.winner ? `<p class="small text-body-secondary mb-0 mt-2">Bonus is paid at the finale if ${esc(short)} wins.</p>` : "";
+
     const next = season.nextEpisode;
     const thisWeek = next ? LEAGUE.players.filter((p) => pickedIn(next, p.id)).map((p) => esc(p.name)) : [];
     const thisWeekNote = thisWeek.length
       ? `<p class="small text-body-secondary mb-0 ${rows.length ? "mt-2" : ""}">Picked for Episode ${next.number} by ${thisWeek.join(", ")}.</p>`
       : "";
     const body = rows.length || thisWeekNote
-      ? `${rows.length ? `<ul class="list-unstyled mb-0">${rows.join("")}</ul>` : ""}${thisWeekNote}`
+      ? `${rows.length ? `${head}<ul class="list-unstyled mb-0">${list}</ul>${bonusNote}` : ""}${thisWeekNote}`
       : `<p class="small text-body-secondary mb-0">Nobody has picked ${esc(short)} yet.</p>`;
     return `<h2 class="section-title mb-2">Picked by</h2>
-      <section class="card mb-4"><div class="card-body">${body}</div></section>`;
-  }
-
-  // While they're still in: the winner bonus each player has banked on them so far.
-  function ifWinsSection() {
-    if (!stats.active || season.winner) return "";
-    const rows = LEAGUE.players
-      .map((p) => ({ player: p, stake: season.winnerStakes[p.id].find((s) => s.castaway === id) }))
-      .filter((r) => r.stake)
-      .sort((a, b) => b.stake.points - a.stake.points)
-      .map(
-        (r) => `<li class="d-flex align-items-center justify-content-between gap-3 py-1">
-          <a class="castaway-link fw-semibold" href="index.html#${esc(r.player.id)}">${esc(r.player.name)}</a>
-          <span class="text-nowrap small">${plural(r.stake.picks, "pick")} ${UI.pointsHtml(r.stake.points, "fw-semibold ms-2")}</span>
-        </li>`,
-      );
-    const body = rows.length
-      ? `<ul class="list-unstyled mb-0">${rows.join("")}</ul>
-         <p class="small text-body-secondary mb-0 mt-2">Winner bonus banked so far, paid at the finale.</p>`
-      : `<p class="small text-body-secondary mb-0">Nobody has a winner bonus riding on ${esc(short)} yet.</p>`;
-    return `<h2 class="section-title mb-2">If ${esc(short)} wins</h2>
       <section class="card mb-4"><div class="card-body">${body}</div></section>`;
   }
 
@@ -164,7 +165,6 @@
     ${hero()}
     ${statsRow()}
     ${episodesSection()}
-    ${ifWinsSection()}
     ${pickedBySection()}
     ${tribeSection()}`;
 })();
