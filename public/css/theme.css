@@ -769,3 +769,23 @@ a.pick-chip:active .avatar {
     transform: none !important;
   }
 }
+
+/* Winner bonus at stake: castaway, times picked, and points line up in columns. */
+.stake-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stake-list > li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+.stake-list .pick-chip {
+  justify-self: start;
+}

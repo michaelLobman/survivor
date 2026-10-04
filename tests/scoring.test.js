@@ -1,6 +1,6 @@
 // Run with: node tests/scoring.test.js
 const assert = require("assert");
-const { scoreSeason } = require("../public/js/scoring.js");
+const { scoreSeason, winnerBonus, SOLE_SURVIVOR_PER_CASTAWAY } = require("../public/js/scoring.js");
 const LEAGUE = require("../public/js/data.js");
 
 const tests = [];
@@ -310,7 +310,7 @@ test("timeline records who each event credited, with tribes expanded", () => {
 });
 
 // Sole Survivor bonus and standings
-test("winner bonus pays castaways-at-lock for every pick of the winner, in the finale", () => {
+test("winner bonus pays 2 x castaways-at-lock for every pick of the winner, in the finale", () => {
   const result = scoreSeason(
     league({
       size: 4,
@@ -321,9 +321,10 @@ test("winner bonus pays castaways-at-lock for every pick of the winner, in the f
     }),
   );
   const finale = result.episodes[1].playerPoints;
-  assert.ok(finale.p1.items.some((i) => i.rule === "soleSurvivor" && i.points === 4));
-  assert.ok(finale.p1.items.some((i) => i.rule === "soleSurvivor" && i.points === 3));
-  assert.ok(finale.p2.items.some((i) => i.rule === "soleSurvivor" && i.points === 3));
+  assert.strictEqual(SOLE_SURVIVOR_PER_CASTAWAY, 2);
+  const bonuses = (pid) => finale[pid].items.filter((i) => i.rule === "soleSurvivor").map((i) => i.points);
+  assert.deepStrictEqual(bonuses("p1"), [winnerBonus(4), winnerBonus(3)]); // 8 + 6
+  assert.deepStrictEqual(bonuses("p2"), [winnerBonus(3)]);
   assert.strictEqual(result.standings[0].player.id, "p1");
   assert.strictEqual(result.standings[0].winnerPicks, 2);
 });
@@ -375,6 +376,54 @@ test("no movement when the previous standings were a complete tie", () => {
     league({ episodes: [{ events: [] }, { picks: { p1: "c1", p2: "c6" }, events: [{ type: "immunity", tribe: "a" }] }] }),
   );
   assert.ok(result.standings.every((row) => row.movement === null));
+});
+
+test("best-episode tiebreak counts the pick's own points, not the winner bonus", () => {
+  // Same total: p1 scored big early; p2's finale is big only because of the winner bonus.
+  const result = scoreSeason(
+    league({
+      size: 4,
+      episodes: [
+        { picks: { p1: "c1", p2: "c3" }, events: [{ type: "immunity", castaway: "c1", phase: "final5" }, ...bootEvents("c4", 3)] },
+        { picks: { p2: "c1" }, events: [...bootEvents("c3", 2), { type: "soleSurvivor", castaway: "c1" }] },
+      ],
+    }),
+  );
+  const rows = Object.fromEntries(result.standings.map((r) => [r.player.id, r]));
+  assert.strictEqual(rows.p2.bestEpisode, 15); // 15 survived; the +6 bonus doesn't count here
+  assert.strictEqual(rows.p1.bestEpisode, 45);
+});
+
+test("winner stakes: bonus banked per castaway still in, biggest first, cleared once paid", () => {
+  const data = league({
+    size: 6,
+    episodes: [
+      { picks: { p1: "c1", p2: "c6" }, events: bootEvents("c6", 3) }, // 6 at lock; p2's pick goes home
+      { picks: { p1: "c1", p2: "c2" }, events: bootEvents("c5", 3) }, // 5 at lock
+      { picks: { p1: "c2" } }, // not scored yet: doesn't count
+    ],
+  });
+  const result = scoreSeason(data);
+  assert.deepStrictEqual(result.winnerStakes, {
+    p1: [{ castaway: "c1", picks: 2, points: winnerBonus(6) + winnerBonus(5) }],
+    p2: [{ castaway: "c2", picks: 1, points: winnerBonus(5) }],
+  });
+  data.episodes[2].events = [{ type: "soleSurvivor", castaway: "c1" }];
+  assert.deepStrictEqual(scoreSeason(data).winnerStakes, { p1: [], p2: [] });
+});
+
+test("episodes say whether anyone picked", () => {
+  const result = scoreSeason(league({ episodes: [{ events: [] }, { picks: { p1: "c1" }, events: [] }] }));
+  assert.deepStrictEqual(result.episodes.map((e) => e.hasPicks), [false, true]);
+});
+
+test("rule tables can't be changed by a page", () => {
+  const { RULES, PHASES } = require("../public/js/scoring.js");
+  assert.ok(Object.isFrozen(RULES.votedOut) && Object.isFrozen(PHASES.final5));
+  assert.throws(() => {
+    "use strict";
+    RULES.votedOut.points = 0;
+  });
 });
 
 // Data errors

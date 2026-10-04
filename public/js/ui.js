@@ -85,12 +85,30 @@ const UI = (() => {
     return `${minutes}m`;
   }
 
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+  // Picks lock when the episode starts airing; a scored episode is always locked.
+  const isLocked = (episode) => episode.completed || Date.now() >= episode.airsAt;
+
+  // Best and average of a list of { episode, points }; null when the list is empty.
+  function bestAndAverage(scores) {
+    if (scores.length === 0) return { best: null, average: null };
+    const best = scores.reduce((top, s) => (s.points > top.points ? s : top));
+    const average = Math.round(scores.reduce((total, s) => total + s.points, 0) / scores.length);
+    return { best, average };
+  }
+
+  // A small labelled number in a tile (player cards and castaway pages).
+  function statTile(label, value) {
+    return `<div class="player-stat"><div class="eyebrow">${label}</div><div class="fw-semibold">${value}</div></div>`;
+  }
+
   // One line of an itemized breakdown, e.g. "Immunity Individual game ×2   +20",
   // with the multiplier in muted italics.
   function breakdownItem(item) {
     const details = [];
     if (item.count) details.push(`×${item.count}`);
-    else if (item.weight === "late" || item.weight === "early") {
+    else if (Scoring.isTiered(item.weight)) {
       details.push(`${Scoring.PHASES[item.phase].label} ×${item.multiplier}`);
     }
     if (item.idolMultiplier) details.push(`Idol in pocket ×${item.idolMultiplier}`);
@@ -159,6 +177,10 @@ const UI = (() => {
     tribeBadge,
     dateTime,
     timeUntil,
+    plural,
+    isLocked,
+    bestAndAverage,
+    statTile,
     breakdownItem,
     episodeLink,
     castawayHref,

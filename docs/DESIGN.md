@@ -41,8 +41,8 @@ the voted-out penalty is early-weighted (3x / 2x / 1x).
 | Opted out of a challenge, journey, risk-a-vote, etc. (flat) | −10 each time | | | |
 
 **Sole Survivor bonus:** paid at the finale for every weekly pick of the eventual
-winner, worth 1 × castaways remaining when that week's picks locked
-(e.g. +18 in episode 1, +4 at the finale).
+winner, worth 2 × castaways remaining when that week's picks locked
+(e.g. +36 in episode 1 of an 18-castaway season, +8 at the finale).
 
 Values should be stored as data (not hard-coded) so they can be retuned.
 
@@ -59,6 +59,14 @@ Values should be stored as data (not hard-coded) so they can be retuned.
 Rewards were simplified to one phase-scaled rule (previously tribe +3, individual
 +8, guest +4), and Shot in the Dark and opt-outs were added, after episode 2.
 The calibration below predates those changes.
+
+The Sole Survivor bonus was doubled (1 → 2 per castaway) after episode 2, based on
+replaying seasons 41–50 (real events from the survivoR dataset) with simulated
+pickers: it doesn't change who wins on skill, but the pre-finale leader loses the
+title more often (62% of runs vs 55%), so the finale matters for more players.
+Rejected alternatives from the same study: dropping a worst week, a weekly score
+floor, steeper late multipliers (1/3/5, which widened gaps), and a copycat
+penalty.
 
 **Calibration:** 4,000 simulated seasons shaped like Survivor 47. An "early
 believer" (winner every week of the tribe game, random after) averaged 331; a
@@ -108,6 +116,11 @@ averaged 338; a random picker averaged 224.
 Mobile-first.
 - **Home:** this week's pick card on top (current pick + countdown to lock, or a
   "Pick now" prompt), league standings below with movement since last episode.
+- **Winner bonus at stake:** while the game is on, each standings card shows the
+  bonus a player has banked on castaways still in ("+108 if Kilby wins"), and
+  each castaway page lists what their win would pay each player. Raw points
+  only, no projected ranks (tried, found confusing). It keeps trailing players
+  invested, since the bonus isn't in the standings until the finale.
 - **Pick screen:** each castaway card shows photo, name, tribe badge, season
   points so far, this week's Sole Survivor bonus ("+14 if they win"), and the
   player's history with them (times picked, points earned). Eliminated

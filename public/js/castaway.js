@@ -22,11 +22,10 @@
   const pickedIn = (e, playerId) => e.picks[playerId]?.castaway === id;
   // A pick counts once picks lock, even before results are in. Picks for an episode
   // that hasn't locked can still change, so they're only mentioned under "Picked by".
-  const isLocked = (e) => e.completed || e.airsAt <= Date.now();
   const timesPicked = season.episodes
-    .filter(isLocked)
+    .filter(UI.isLocked)
     .reduce((count, e) => count + LEAGUE.players.filter((p) => pickedIn(e, p.id)).length, 0);
-  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const { plural } = UI;
 
   function backLink() {
     return `<a class="back-link mb-3" href="castaways.html"><span aria-hidden="true">‹</span> All castaways</a>`;
@@ -56,14 +55,9 @@
     </div></section>`;
   }
 
-  function statTile(label, value) {
-    return `<div class="player-stat"><div class="eyebrow">${label}</div><div class="fw-semibold">${value}</div></div>`;
-  }
-
   function statsRow() {
-    const totals = played.map((e) => ({ episode: e, points: e.castawayPoints[id].total }));
-    const best = totals.reduce((top, t) => (!top || t.points > top.points ? t : top), null);
-    const average = totals.length ? Math.round(totals.reduce((sum, t) => sum + t.points, 0) / totals.length) : null;
+    const { statTile } = UI;
+    const { best, average } = UI.bestAndAverage(played.map((e) => ({ episode: e, points: e.castawayPoints[id].total })));
     return `<div class="stat-grid mb-4">
       ${statTile("Season points", UI.pointsHtml(stats.seasonPoints))}
       ${statTile("Times picked", timesPicked)}
@@ -128,6 +122,27 @@
       <section class="card mb-4"><div class="card-body">${body}</div></section>`;
   }
 
+  // While they're still in: the winner bonus each player has banked on them so far.
+  function ifWinsSection() {
+    if (!stats.active || season.winner) return "";
+    const rows = LEAGUE.players
+      .map((p) => ({ player: p, stake: season.winnerStakes[p.id].find((s) => s.castaway === id) }))
+      .filter((r) => r.stake)
+      .sort((a, b) => b.stake.points - a.stake.points)
+      .map(
+        (r) => `<li class="d-flex align-items-center justify-content-between gap-3 py-1">
+          <a class="castaway-link fw-semibold" href="index.html#${esc(r.player.id)}">${esc(r.player.name)}</a>
+          <span class="text-nowrap small">${plural(r.stake.picks, "pick")} ${UI.pointsHtml(r.stake.points, "fw-semibold ms-2")}</span>
+        </li>`,
+      );
+    const body = rows.length
+      ? `<ul class="list-unstyled mb-0">${rows.join("")}</ul>
+         <p class="small text-body-secondary mb-0 mt-2">Winner bonus banked so far, paid at the finale.</p>`
+      : `<p class="small text-body-secondary mb-0">Nobody has a winner bonus riding on ${esc(short)} yet.</p>`;
+    return `<h2 class="section-title mb-2">If ${esc(short)} wins</h2>
+      <section class="card mb-4"><div class="card-body">${body}</div></section>`;
+  }
+
   // Starting tribe, then every move in order. Hidden for castaways who never moved.
   function tribeSection() {
     const moves = completed.flatMap((e) =>
@@ -149,6 +164,7 @@
     ${hero()}
     ${statsRow()}
     ${episodesSection()}
+    ${ifWinsSection()}
     ${pickedBySection()}
     ${tribeSection()}`;
 })();

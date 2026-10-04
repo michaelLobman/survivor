@@ -1,11 +1,11 @@
 // Rules: generated from the scoring engine's tables, so the page can't drift from the math.
 (() => {
-  const { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER, guestPoints } = Scoring;
+  const { PHASES, RULES, FINAL_PHASE_SIZE, SOLE_SURVIVOR_PER_CASTAWAY, IDOL_IN_POCKET_MULTIPLIER, guestPoints, isTiered } = Scoring;
   const app = document.getElementById("app");
   const phaseKeys = Object.keys(PHASES);
 
-  const tiered = Object.values(RULES).filter((r) => r.weight !== "flat");
-  const flat = Object.values(RULES).filter((r) => r.weight === "flat");
+  const tiered = Object.values(RULES).filter((r) => isTiered(r.weight));
+  const flat = Object.values(RULES).filter((r) => !isTiered(r.weight));
 
   // Variants of a tiered rule, shown as a grey second line in the same cells.
   const variants = new Map([
@@ -40,7 +40,7 @@
     <h2 class="section-title mt-4 mb-2">Phases</h2>
     <ul class="small">
       <li><strong>Tribe game:</strong> immunity is won by tribes.</li>
-      <li><strong>Individual game:</strong> immunity is won by individuals, 6 or more castaways left.</li>
+      <li><strong>Individual game:</strong> immunity is won by individuals, ${FINAL_PHASE_SIZE + 1} or more castaways left.</li>
       <li><strong>Final ${FINAL_PHASE_SIZE}:</strong> ${FINAL_PHASE_SIZE} or fewer castaways left.</li>
     </ul>
     <p class="small text-body-secondary">Most events are worth more as the game tightens. Getting voted out hurts most early.</p>

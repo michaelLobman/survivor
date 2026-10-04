@@ -47,7 +47,7 @@
   const PERSON_SIZE = 36;
   const person = (id, size = PERSON_SIZE) => UI.castawayPerson(id, size);
 
-  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const { plural } = UI;
 
   // Points for one event; "each" when it credited several castaways.
   function eventPoints(ev) {
@@ -311,17 +311,15 @@
   // Players | Castaways switch: one scores section, two views.
   // Episodes before the league started (or that nobody picked) have no player scores,
   // so they show castaway scores alone with a note instead of an empty Players list.
-  const anyPicks = Object.values(episode.picks).some(Boolean);
-
   function noPicksNote() {
-    const firstPicked = season.episodes.find((e) => Object.values(e.picks).some(Boolean));
+    const firstPicked = season.episodes.find((e) => e.hasPicks);
     return firstPicked && firstPicked.number > episode.number
       ? `Picks begin in Episode ${firstPicked.number}.`
       : "Nobody picked this episode.";
   }
 
   function scoresSection() {
-    if (!anyPicks) {
+    if (!episode.hasPicks) {
       return `<h2 class="section-title mb-1">Castaway scores</h2>
         <p class="small text-body-secondary mb-2">${noPicksNote()}</p>
         ${castawayScores()}`;

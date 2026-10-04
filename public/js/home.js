@@ -7,11 +7,10 @@
   const completed = season.episodes.filter((e) => e.completed);
   const lastCompleted = completed[completed.length - 1];
   // Episodes before the league started (nobody picked) are left out of player cards.
-  const leaguePicked = (e) => Object.values(e.picks).some(Boolean);
   // Orange on this page belongs to the top scorers card, so pick chips stay neutral.
   const QUIET = { quiet: true };
   // Standings mean nothing until an episode the league picked for has been scored.
-  const leagueStarted = completed.some(leaguePicked);
+  const leagueStarted = completed.some((e) => e.hasPicks);
 
   function championCard() {
     if (!season.winner) return "";
@@ -56,7 +55,7 @@
     </div></section>`;
   }
 
-  const isLocked = () => next && Date.now() >= next.airsAt;
+  const isLocked = () => next && UI.isLocked(next);
 
   // Before lock, the message follows who has picked: everyone is in; one or two
   // stragglers are named; otherwise a general call to vote (the Picks list shows who's in).
@@ -90,7 +89,7 @@
       body = `<p class="fw-semibold mb-1 mt-2">${headline}</p>
         <p class="small text-body-secondary mb-1">${note}</p>
         <p class="small text-body-secondary mb-0">
-          Picking the eventual winner this week is worth ${UI.pointsHtml(next.remainingAtLock, "fw-semibold")} at the finale. Worth playing for?
+          Picking the eventual winner this week is worth ${UI.pointsHtml(Scoring.winnerBonus(next.remainingAtLock), "fw-semibold")} at the finale. Worth playing for?
         </p>`;
     }
     return `<section id="episode-card" class="card mb-4"><div class="card-body">
@@ -123,11 +122,10 @@
   // --- Player cards ---
 
   // Per-player numbers derived from the scored season.
-  function statsFor(playerId) {
+  function statsFor(row) {
+    const playerId = row.player.id;
     const scored = completed.filter((e) => e.picks[playerId]);
-    const totals = scored.map((e) => ({ episode: e, points: e.playerPoints[playerId].total }));
-    const best = totals.reduce((top, t) => (!top || t.points > top.points ? t : top), null);
-    const average = totals.length ? Math.round(totals.reduce((sum, t) => sum + t.points, 0) / totals.length) : null;
+    const { best, average } = UI.bestAndAverage(scored.map((e) => ({ episode: e, points: e.playerPoints[playerId].total })));
 
     const byCastaway = {};
     for (const e of scored) {
@@ -137,20 +135,16 @@
       byCastaway[id].points += e.castawayPoints[id]?.total || 0;
     }
     const favorites = Object.values(byCastaway).sort((a, b) => b.count - a.count || b.points - a.points);
-    const winnerPicks = season.winner ? scored.filter((e) => e.picks[playerId].castaway === season.winner).length : null;
+    const winnerPicks = season.winner ? row.winnerPicks : null;
     return { best, average, favorites, winnerPicks };
-  }
-
-  function stat(label, value) {
-    return `<div class="player-stat"><div class="eyebrow">${label}</div><div class="fw-semibold">${value}</div></div>`;
   }
 
   function statsRow(stats) {
     const cells = [
-      stat("Best episode", stats.best ? `${UI.pointsHtml(stats.best.points)} <span class="eyebrow">Ep ${stats.best.episode.number}</span>` : "–"),
-      stat("Average", stats.average === null ? "–" : UI.pointsHtml(stats.average)),
+      UI.statTile("Best episode", stats.best ? `${UI.pointsHtml(stats.best.points)} <span class="eyebrow">Ep ${stats.best.episode.number}</span>` : "–"),
+      UI.statTile("Average", stats.average === null ? "–" : UI.pointsHtml(stats.average)),
     ];
-    if (stats.winnerPicks !== null) cells.push(stat("Picked the winner", `${stats.winnerPicks}×`));
+    if (stats.winnerPicks !== null) cells.push(UI.statTile("Picked the winner", `${stats.winnerPicks}×`));
     return `<div class="player-stats">${cells.join("")}</div>`;
   }
 
@@ -192,7 +186,7 @@
   function historySection(playerId) {
     // Completed episodes only; upcoming picks are on the episode card.
     const rows = completed
-      .filter(leaguePicked)
+      .filter((e) => e.hasPicks)
       .reverse()
       .map((e) => historyRow(e, playerId));
     const body = rows.length
@@ -220,20 +214,50 @@
   const everyoneTied = season.standings.every((row) => row.rank === 1);
   const rowState = (row) => (row.rank === 1 && !everyoneTied ? " is-leader" : "");
 
+  // Collapsed row: the player's biggest winner bonus at stake. Muted, because it's
+  // possible points, not points earned.
+  function stakeHint(playerId) {
+    const top = season.winnerStakes[playerId][0];
+    if (!top) return "";
+    return `<span class="d-block small text-body-secondary">${UI.points(top.points)} if ${esc(UI.shortName(top.castaway))} wins</span>`;
+  }
+
+  // Every castaway still in the game the player has backed: times picked and the
+  // bonus it would pay at the finale.
+  function stakesSection(playerId) {
+    const stakes = season.winnerStakes[playerId];
+    if (stakes.length === 0) return "";
+    const rows = stakes
+      .map(
+        (s) => `<li>
+          ${UI.pickChip({ castaway: s.castaway }, 28, { ...QUIET, link: true })}
+          <span class="small text-body-secondary text-nowrap">${s.picks}×</span>
+          ${UI.pointsHtml(s.points, "fw-semibold")}
+        </li>`,
+      )
+      .join("");
+    return `<div class="mt-3">
+      <div class="eyebrow mb-1">Winner bonus at stake</div>
+      <ul class="stake-list">${rows}</ul>
+      <p class="small text-body-secondary mb-0 mt-1">Paid at the finale if they win.</p>
+    </div>`;
+  }
+
   function playerCard(row) {
     const { player } = row;
-    const stats = statsFor(player.id);
+    const stats = statsFor(row);
     // Collapsed: rank, name, total. Expanded: stats, pick history (newest first, so the
     // previous episode leads), and most-picked castaways. Upcoming picks are on the episode card.
     return `<details class="card expandable standings-row mb-2${rowState(row)}" id="${esc(player.id)}">
       <summary class="card-body standings-summary">
         <span class="standings-rank tabular">${rankLabel(row.rank)}</span>
-        <span><span class="fw-semibold">${esc(player.name)}</span> ${movementHtml(row.movement)}</span>
+        <span><span class="fw-semibold">${esc(player.name)}</span> ${movementHtml(row.movement)}${stakeHint(player.id)}</span>
         ${UI.pointsHtml(row.total, "fs-5 fw-semibold")}
         <span class="chevron" aria-hidden="true">›</span>
       </summary>
       <div class="card-body pt-0">
         ${statsRow(stats)}
+        ${stakesSection(player.id)}
         ${historySection(player.id)}
         ${favoritesSection(stats)}
       </div>
