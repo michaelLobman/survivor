@@ -239,17 +239,19 @@
     return section("Tribe changes", groupList(rows));
   }
 
+  // Headlines first (the winner, who went home), then the episode in show order:
+  // camp (tribe moves, advantages, opt-outs), challenges, tribal council.
   function dashboard() {
     return `<section class="card mb-4 episode-dashboard"><div class="card-body">
       ${peopleSection("Sole Survivor", ["soleSurvivor"])}
-      ${mergeSection()}
       ${bootsSection()}
-      ${challengeSections()}
-      ${tribalSection()}
-      ${peopleSection("Advantages found", ["advantage"])}
-      ${peopleSection("Opted out of a challenge", ["optOut"])}
+      ${mergeSection()}
       ${movesSection()}
       ${individualStarts && !mergeEvent ? section("Phase change", `<span class="small">Immunity is back up for grabs.</span>`) : ""}
+      ${peopleSection("Advantages found", ["advantage"])}
+      ${peopleSection("Opted out of a challenge", ["optOut"])}
+      ${challengeSections()}
+      ${tribalSection()}
     </div></section>`;
   }
 
