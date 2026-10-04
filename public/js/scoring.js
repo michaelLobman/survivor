@@ -36,6 +36,9 @@
   });
   const FINAL_PHASE_SIZE = 5;
 
+  // The Sole Survivor is chosen at Final Tribal Council, by which point at most this many are left.
+  const MAX_FINALISTS = 3;
+
   const RULES = deepFreeze({
     survived: { label: "Survived episode", points: 5, weight: WEIGHT.LATE },
     immunity: { label: "Immunity", points: 10, weight: WEIGHT.LATE },
@@ -83,6 +86,9 @@
     leftGame: { state: true, eliminates: true },
     soleSurvivor: { state: true },
   });
+
+  // Every field an event may have (README.md). Anything else is a typo that would be ignored.
+  const EVENT_FIELDS = new Set(["type", "castaway", "castaways", "tribe", "except", "count", "withIdol", "phase"]);
 
   // ---------------------------------------------------------------------------
   // Breakdown items: one line of an itemized score. Every item has the same
@@ -268,7 +274,9 @@
       }
       const except = ev.except || [];
       except.forEach((cid) => checkCastaway(ctx, cid, at));
-      return [...game.active].filter((cid) => game.tribeOf[cid] === ev.tribe && !except.includes(cid));
+      const members = [...game.active].filter((cid) => game.tribeOf[cid] === ev.tribe && !except.includes(cid));
+      if (members.length === 0) errors.push(`${at}: tribe "${ev.tribe}" has no one in the game to credit`);
+      return members;
     }
     const ids = listedIds(ev);
     if (ids.length === 0) errors.push(`${at}: needs a castaway, castaways, or tribe`);
@@ -293,6 +301,10 @@
   function applyStateEvent(ctx, ev, at) {
     const { game, errors, result } = ctx;
     if (ev.type === "individualGame") {
+      if (game.individualGame) {
+        errors.push(`${at}: the individual game has already started`);
+        return;
+      }
       game.individualGame = true;
       result.timeline.push(timelineEntry(ev.type, []));
       return;
@@ -304,6 +316,10 @@
     }
     if (ev.type === "soleSurvivor" && (ids.length !== 1 || game.winner)) {
       errors.push(`${at}: there is exactly one Sole Survivor`);
+      return;
+    }
+    if (ev.type === "soleSurvivor" && game.active.size > MAX_FINALISTS) {
+      errors.push(`${at}: ${game.active.size} castaways are still in; the Sole Survivor is named with ${MAX_FINALISTS} or fewer left`);
       return;
     }
     if (ev.type === "moveTribe" && !game.tribeIds.has(ev.tribe)) {
@@ -328,7 +344,6 @@
     const countRule = type.scores.map((key) => RULES[key]).find((rule) => rule.perCount);
     const countNeeded = countRule && (ev.count !== undefined || !countRule.optionalCount);
     if (countNeeded && !(Number.isInteger(ev.count) && ev.count > 0)) return `needs a positive whole-number "count"`;
-    if (ev.withIdol && !type.allowsIdol) return `"withIdol" only applies to votedOut`;
     if (ev.phase && !PHASES[ev.phase]) return `unknown phase "${ev.phase}"`;
     return null;
   }
@@ -355,10 +370,25 @@
     if (type.eliminates) targets.forEach((cid) => eliminate(ctx, cid));
   }
 
+  // Fields that are misspelled, or that this event type would silently ignore.
+  function eventFieldProblem(ev, type) {
+    const unknown = Object.keys(ev).find((field) => !EVENT_FIELDS.has(field));
+    if (unknown) return `unknown field "${unknown}"`;
+    if (ev.withIdol && !type.allowsIdol) return `"withIdol" only applies to votedOut`;
+    if (ev.phase && type.state) return `"phase" only applies to scoring events`;
+    if (ev.except && (type.state || !ev.tribe)) return `"except" only applies to an event for a whole tribe`;
+    return null;
+  }
+
   function applyEvent(ctx, ev, index) {
     const at = `Episode ${ctx.result.number}, event ${index + 1} (${ev.type})`;
     const type = EVENT_TYPES[ev.type];
-    if (!type) ctx.errors.push(`${at}: unknown event type`);
+    if (!type) {
+      ctx.errors.push(`${at}: unknown event type`);
+      return;
+    }
+    const problem = eventFieldProblem(ev, type);
+    if (problem) ctx.errors.push(`${at}: ${problem}`);
     else if (type.state) applyStateEvent(ctx, ev, at);
     else applyScoringEvent(ctx, ev, type, at);
   }
@@ -501,6 +531,11 @@
 
     const results = episodes.map((ep) => playEpisode(game, ep, errors));
     const completed = results.filter((r) => r.completed);
+    if (game.winner) {
+      results
+        .filter((r) => r.number > game.finaleNumber)
+        .forEach((r) => errors.push(`Episode ${r.number} comes after the finale (episode ${game.finaleNumber})`));
+    }
     applyWinnerBonus(game, completed);
 
     return {

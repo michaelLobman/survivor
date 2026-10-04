@@ -408,7 +408,7 @@ test("winner stakes: bonus banked per castaway still in, biggest first, cleared 
     p1: [{ castaway: "c1", picks: 2, points: winnerBonus(6) + winnerBonus(5) }],
     p2: [{ castaway: "c2", picks: 1, points: winnerBonus(5) }],
   });
-  data.episodes[2].events = [{ type: "soleSurvivor", castaway: "c1" }];
+  data.episodes[2].events = [...bootEvents("c4", 2), { type: "soleSurvivor", castaway: "c1" }]; // 3 left: the finale
   assert.deepStrictEqual(scoreSeason(data).winnerStakes, { p1: [], p2: [] });
 });
 
@@ -460,6 +460,44 @@ test("reports duplicate ids, bad dates, and results entered out of order", () =>
   assert.match(joined, /Duplicate episode number 3/);
   assert.match(joined, /Episode 2: airsAt "2026-10-7T20:00:00-04:00" is not a valid date/);
   assert.match(joined, /Episode 2 has no events, but episode 3 does/);
+});
+
+test("reports misspelled fields and fields an event would ignore", () => {
+  const events = [
+    { type: "votedOut", castaway: "c10", withidol: true },
+    { type: "leftGame", castaway: "c9", withIdol: true },
+    { type: "moveTribe", castaway: "c1", tribe: "b", phase: "final5" },
+    { type: "immunity", castaway: "c2", except: ["c3"] },
+  ];
+  const errors = scoreSeason(league({ episodes: [{ events }] })).errors;
+  assert.deepStrictEqual(errors, [
+    'Episode 1, event 1 (votedOut): unknown field "withidol"',
+    'Episode 1, event 2 (leftGame): "withIdol" only applies to votedOut',
+    'Episode 1, event 3 (moveTribe): "phase" only applies to scoring events',
+    'Episode 1, event 4 (immunity): "except" only applies to an event for a whole tribe',
+  ]);
+});
+
+test("reports a tribe event that credits nobody", () => {
+  const events = [{ type: "moveTribe", castaways: ["c1", "c2", "c3", "c4", "c5"], tribe: "b" }, { type: "immunity", tribe: "a" }];
+  const errors = scoreSeason(league({ episodes: [{ events }] })).errors;
+  assert.deepStrictEqual(errors, ['Episode 1, event 2 (immunity): tribe "a" has no one in the game to credit']);
+});
+
+test("reports the individual game starting twice", () => {
+  const errors = scoreSeason(league({ episodes: [{ events: [{ type: "individualGame" }] }, { events: [{ type: "individualGame" }] }] })).errors;
+  assert.deepStrictEqual(errors, ["Episode 2, event 1 (individualGame): the individual game has already started"]);
+});
+
+test("reports a Sole Survivor named too early, and episodes after the finale", () => {
+  const early = scoreSeason(league({ size: 4, episodes: [{ events: [{ type: "soleSurvivor", castaway: "c1" }] }] }));
+  assert.deepStrictEqual(early.errors, ["Episode 1, event 1 (soleSurvivor): 4 castaways are still in; the Sole Survivor is named with 3 or fewer left"]);
+  assert.strictEqual(early.winner, null);
+
+  const late = scoreSeason(
+    league({ size: 3, episodes: [{ events: [{ type: "soleSurvivor", castaway: "c1" }] }, { events: [] }, {}] }),
+  );
+  assert.deepStrictEqual(late.errors, ["Episode 2 comes after the finale (episode 1)", "Episode 3 comes after the finale (episode 1)"]);
 });
 
 // The real season data must always be valid.

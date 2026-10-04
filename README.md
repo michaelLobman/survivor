@@ -90,7 +90,7 @@ Shortcuts and overrides:
 - **Tribe with exceptions:** `{ type: "immunity", tribe: "savu", except: ["ori"] }`
 - **Several castaways:** use `castaways: [...]` instead of `castaway` on any
   event except `soleSurvivor`.
-- **Phase override:** add `phase: "tribe" | "individual" | "final5"` to any event.
+- **Phase override:** add `phase: "tribe" | "individual" | "final5"` to any scoring event (not to tribe moves, `individualGame`, `leftGame`, or `soleSurvivor`).
 - **Survived** points are never entered. They're added for everyone still in at
   the end of each episode.
 
