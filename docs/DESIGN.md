@@ -149,6 +149,29 @@ A read-only site the admin updates by hand, to be live within a day or two.
   engine should port to V2 nearly unchanged.
 - **Repo:** same repo; the Gemini Python scaffold is removed.
 
+## V1.5: self-serve picks (parked)
+An optional middle step between V1 and V2: players submit their own picks and
+everything else stays as in V1. Parked in Oct 2026 with no decision on whether
+or when to build it.
+- **Language:** plain JavaScript (Node) for the backend, the same language as
+  the site, so there's nothing new to learn.
+- **Scope:** a small picks API plus a pick page. Events stay in the repo and
+  the admin keeps entering them by hand. The scoring engine is unchanged: the
+  site fetches picks and merges them in before scoring.
+- **Hidden until lock:** the API returns everyone's picks only for episodes
+  whose air time has passed. Before that, players see only their own pick.
+  Lock is checked on the server, never the browser clock.
+- **Sign-in:** a secret link per player, sent once by text. No email or
+  passwords.
+- **Storage:** two tables (players, picks) in a free hosted Postgres
+  (Supabase or Neon). Not SQLite on Render: its free disk is wiped on deploy.
+- **First step:** convert `data.js` to `data.json` so the site and the API
+  read the same cast and air times.
+- **Estimate:** 12–18 hours. Run it alongside texted picks for a week before
+  relying on it.
+- **Zero-code alternative:** a Google Form closed at air time, with picks
+  still copied into the data file by hand.
+
 ## V2: full app (future)
 Everything above the V1 section (accounts, in-app picks, reminders, guided
 admin form) plus the stack below.
