@@ -18,6 +18,7 @@ public/                 ← everything the website serves
   js/ui.js, js/nav.js   ← shared display helpers and header
   js/home.js, ...       ← one script per page
 tests/scoring.test.js   ← scoring tests (includes a check that data.js is valid)
+tools/                  ← rule tuning: replays real seasons 41–50 (see tools/README.md)
 ```
 
 ## Run it locally

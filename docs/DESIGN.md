@@ -68,7 +68,10 @@ Rejected alternatives from the same study: dropping a worst week, a weekly score
 floor, steeper late multipliers (1/3/5, which widened gaps), and a copycat
 penalty.
 
-**Calibration:** 4,000 simulated seasons shaped like Survivor 47. An "early
+**Tuning tool:** `node tools/simulate.js` replays seasons 41–50 through the
+live engine (see tools/README.md). Re-run it before changing any rule.
+
+**Original calibration (made-up seasons, superseded):** 4,000 simulated seasons shaped like Survivor 47. An "early
 believer" (winner every week of the tribe game, random after) averaged 331; a
 "late sharpshooter" (random early, best weekly scorer half the time after)
 averaged 338; a random picker averaged 224.
