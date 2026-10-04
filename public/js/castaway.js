@@ -51,6 +51,7 @@
     return `<section class="card mb-3"><div class="card-body castaway-hero">
       ${UI.avatar(id, 128)}
       <h1 class="castaway-name">${esc(castaway.name)}</h1>
+      ${castaway.occupation ? `<p class="castaway-occupation">${esc(castaway.occupation)}</p>` : ""}
       <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">${UI.tribeBadge(stats.tribe)}${status()}</div>
     </div></section>`;
   }

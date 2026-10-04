@@ -621,6 +621,10 @@ a.pick-chip {
   font-weight: 700;
   line-height: 1.2;
 }
+.castaway-occupation {
+  margin: -0.25rem 0 0;
+  color: var(--muted);
+}
 
 /* ==========================================================================
    Interaction states, in one place.

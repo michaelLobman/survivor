@@ -22,31 +22,31 @@ const LEAGUE = {
   ],
 
   // `tribe` is the starting tribe; `short` is the name shown in tight spaces;
-  // `photo` is optional (initials are shown without it).
+  // `occupation` is as CBS lists it (optional); `photo` is optional (initials are shown without it).
   castaways: [
-    { id: "alexis", name: "Alexis Levine", tribe: "savu", photo: "img/castaways/alexis.jpg" },
-    { id: "ana", name: "Ana Sani", tribe: "savu", photo: "img/castaways/ana.jpg" },
-    { id: "carter", name: "Carter Krull", tribe: "savu", photo: "img/castaways/carter.jpg" },
-    { id: "cristian", name: "Cristian Chavez", tribe: "savu", photo: "img/castaways/cristian.jpg" },
-    { id: "eric", name: "Eric Macksoud", tribe: "savu", photo: "img/castaways/eric.jpg" },
-    { id: "kristin", name: "Kristin Flickinger", tribe: "savu", photo: "img/castaways/kristin.jpg" },
-    { id: "linnea", name: "Linnea Capobianco", tribe: "savu", photo: "img/castaways/linnea.jpg" },
-    { id: "ori", name: "Ori Jean-Charles", tribe: "savu", photo: "img/castaways/ori.jpg" },
-    { id: "rob", name: "Rob Antonson", tribe: "savu", photo: "img/castaways/rob.jpg" },
-    { id: "sharonda", name: "Sharonda Cox", tribe: "savu", photo: "img/castaways/sharonda.jpg" },
+    { id: "alexis", name: "Alexis Levine", occupation: "Criminal defense attorney", tribe: "savu", photo: "img/castaways/alexis.jpg" },
+    { id: "ana", name: "Ana Sani", occupation: "Voice actress", tribe: "savu", photo: "img/castaways/ana.jpg" },
+    { id: "carter", name: "Carter Krull", occupation: "Livestock farmer", tribe: "savu", photo: "img/castaways/carter.jpg" },
+    { id: "cristian", name: "Cristian Chavez", occupation: "Head of HR", tribe: "savu", photo: "img/castaways/cristian.jpg" },
+    { id: "eric", name: "Eric Macksoud", occupation: "Mental health counselor", tribe: "savu", photo: "img/castaways/eric.jpg" },
+    { id: "kristin", name: "Kristin Flickinger", occupation: "Crisis management", tribe: "savu", photo: "img/castaways/kristin.jpg" },
+    { id: "linnea", name: "Linnea Capobianco", occupation: "Entrepreneur", tribe: "savu", photo: "img/castaways/linnea.jpg" },
+    { id: "ori", name: "Ori Jean-Charles", occupation: "Personal trainer", tribe: "savu", photo: "img/castaways/ori.jpg" },
+    { id: "rob", name: "Rob Antonson", occupation: "Airline gate agent", tribe: "savu", photo: "img/castaways/rob.jpg" },
+    { id: "sharonda", name: "Sharonda Cox", occupation: "OBGYN resident", tribe: "savu", photo: "img/castaways/sharonda.jpg" },
 
-    { id: "aaliyah", name: "Aaliyah Puglia", tribe: "toka", photo: "img/castaways/aaliyah.jpg" },
-    { id: "brady", name: "Brady Booker", tribe: "toka", photo: "img/castaways/brady.jpg" },
-    { id: "devin", name: "Devin Way", tribe: "toka", photo: "img/castaways/devin.jpg" },
-    { id: "jelly", name: "Angelica “Jelly” Loblack", short: "Jelly", tribe: "toka", photo: "img/castaways/jelly.jpg" },
-    { id: "jenna", name: "Jenna Doore", tribe: "toka", photo: "img/castaways/jenna.jpg" },
-    { id: "kilby", name: "Danny “Kilby” Kilby", short: "Kilby", tribe: "toka", photo: "img/castaways/kilby.jpg" },
-    { id: "maggie", name: "Maggie Nestor", tribe: "toka", photo: "img/castaways/maggie.jpg" },
-    { id: "pinsky", name: "Mike Pinsky", tribe: "toka", photo: "img/castaways/pinsky.jpg" },
-    { id: "patt", name: "Patt Cannaday", tribe: "toka", photo: "img/castaways/patt.jpg" },
-    { id: "thienan", name: "An “Thien An” Nguyen", short: "Thien An", tribe: "toka", photo: "img/castaways/thienan.jpg" },
+    { id: "aaliyah", name: "Aaliyah Puglia", occupation: "Chef", tribe: "toka", photo: "img/castaways/aaliyah.jpg" },
+    { id: "brady", name: "Brady Booker", occupation: "Professional wrestler", tribe: "toka", photo: "img/castaways/brady.jpg" },
+    { id: "devin", name: "Devin Way", occupation: "Actor", tribe: "toka", photo: "img/castaways/devin.jpg" },
+    { id: "jelly", name: "Angelica “Jelly” Loblack", short: "Jelly", occupation: "Sociology professor", tribe: "toka", photo: "img/castaways/jelly.jpg" },
+    { id: "jenna", name: "Jenna Doore", occupation: "Wedding photographer", tribe: "toka", photo: "img/castaways/jenna.jpg" },
+    { id: "kilby", name: "Danny “Kilby” Kilby", short: "Kilby", occupation: "Game designer", tribe: "toka", photo: "img/castaways/kilby.jpg" },
+    { id: "maggie", name: "Maggie Nestor", occupation: "Farmer", tribe: "toka", photo: "img/castaways/maggie.jpg" },
+    { id: "pinsky", name: "Mike Pinsky", occupation: "Baseball executive", tribe: "toka", photo: "img/castaways/pinsky.jpg" },
+    { id: "patt", name: "Patt Cannaday", occupation: "Federal prosecutor", tribe: "toka", photo: "img/castaways/patt.jpg" },
+    { id: "thienan", name: "An “Thien An” Nguyen", short: "Thien An", occupation: "Medical student", tribe: "toka", photo: "img/castaways/thienan.jpg" },
 
-    { id: "lewis", name: "Lewis Kelly", tribe: null, photo: "img/castaways/lewis.jpg" },
+    { id: "lewis", name: "Lewis Kelly", occupation: "Farmer", tribe: null, photo: "img/castaways/lewis.jpg" },
   ],
 
   // An episode without `events` is upcoming. Add `events` once it has aired.

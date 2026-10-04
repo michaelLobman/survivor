@@ -97,7 +97,7 @@ averaged 338; a random picker averaged 224.
 
 ## Admin workflow
 - **Season setup:** manual form. The admin adds each castaway (name, optional
-  nickname, starting tribe, photo URL). Cast size varies by season (e.g. 18, 21);
+  nickname, starting tribe, occupation, photo URL). Cast size varies by season (e.g. 18, 21);
   nothing assumes a fixed number.
 - **Results entry:** one guided form per episode in show order: reward →
   immunity → tribal council (votes per castaway, idols and votes cancelled) →
