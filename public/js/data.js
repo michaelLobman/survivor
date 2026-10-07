@@ -84,6 +84,7 @@ const LEAGUE = {
       number: 3,
       title: "What I’m Smellin’ Is Stinky",
       airsAt: "2026-10-07T20:00:00-04:00",
+      picks: { mike: "jenna", annie: "jelly" },
     },
   ],
 };
