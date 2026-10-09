@@ -85,6 +85,16 @@ const LEAGUE = {
       title: "What I’m Smellin’ Is Stinky",
       airsAt: "2026-10-07T20:00:00-04:00",
       picks: { mike: "jenna", annie: "jelly", michele: "ori", brandon: "jelly", mary: "patt", kelsey: "patt", john: "maggie" },
+      events: [
+        { type: "advantage", castaway: "devin" },
+        { type: "advantage", castaways: ["brady", "maggie"] },
+        { type: "moveTribe", castaway: "carter", tribe: "toka" },
+        { type: "reward", tribe: "savu" },
+        { type: "immunity", tribe: "savu" },
+        { type: "votesAgainst", castaway: "patt", count: 6 },
+        { type: "votesAgainst", castaway: "kilby", count: 5 },
+        { type: "votedOut", castaway: "patt" },
+      ],
     },
   ],
 };
