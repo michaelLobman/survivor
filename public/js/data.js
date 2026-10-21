@@ -120,7 +120,7 @@ const LEAGUE = {
       number: 5,
       title: "Not Here to Get a Pedicure",
       airsAt: "2026-10-21T20:00:00-04:00",
-      picks: { mike: "cristian", michele: "ori", kelsey: "brady", john: "maggie" },
+      picks: { mike: "cristian", annie: "lewis", michele: "ori", brandon: "jelly", mary: "jelly", kelsey: "brady", john: "maggie" },
     },
   ],
 };
