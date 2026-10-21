@@ -19,6 +19,7 @@ const LEAGUE = {
   tribes: [
     { id: "toka", name: "Toka", color: "#E3B505" },
     { id: "savu", name: "Savu", color: "#7B3FA0" },
+    { id: "dina", name: "Dina", color: "#C2187A" },
   ],
 
   // `tribe` is the starting tribe; `short` is the name shown in tight spaces;
@@ -90,11 +91,36 @@ const LEAGUE = {
         { type: "advantage", castaways: ["brady", "maggie"] },
         { type: "moveTribe", castaway: "carter", tribe: "toka" },
         { type: "reward", tribe: "savu" },
+        { type: "leftGame", castaway: "rob" },
         { type: "immunity", tribe: "savu" },
         { type: "votesAgainst", castaway: "patt", count: 6 },
         { type: "votesAgainst", castaway: "kilby", count: 5 },
         { type: "votedOut", castaway: "patt" },
       ],
+    },
+    {
+      number: 4,
+      title: "That’s the Magic of Survivor",
+      airsAt: "2026-10-14T20:00:00-04:00",
+      picks: { mike: "jenna", annie: "lewis", michele: "ori", brandon: "jelly", mary: "jelly", kelsey: "brady", john: "maggie" },
+      events: [
+        { type: "moveTribe", castaways: ["alexis", "devin", "jelly", "jenna", "ori"], tribe: "savu" },
+        { type: "moveTribe", castaways: ["brady", "carter", "kristin", "maggie", "pinsky", "thienan"], tribe: "toka" },
+        { type: "moveTribe", castaways: ["cristian", "eric", "kilby", "lewis", "linnea", "sharonda"], tribe: "dina" },
+        { type: "reward", tribe: "dina" },
+        { type: "immunity", tribe: "dina" },
+        { type: "reward", tribe: "toka" },
+        { type: "immunity", tribe: "toka" },
+        { type: "votesAgainst", castaway: "jenna", count: 4 },
+        { type: "votesAgainst", castaway: "alexis", count: 1 },
+        { type: "votedOut", castaway: "jenna" },
+      ],
+    },
+    {
+      number: 5,
+      title: "Not Here to Get a Pedicure",
+      airsAt: "2026-10-21T20:00:00-04:00",
+      picks: { john: "maggie" },
     },
   ],
 };
