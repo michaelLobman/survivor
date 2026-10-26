@@ -136,7 +136,7 @@ const LEAGUE = {
     {
       number: 6,
       airsAt: "2026-10-28T20:00:00-04:00",
-      picks: {},
+      picks: { mike: "thienan" },
     },
   ],
 };
