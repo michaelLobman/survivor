@@ -121,6 +121,21 @@ const LEAGUE = {
       title: "Not Here to Get a Pedicure",
       airsAt: "2026-10-21T20:00:00-04:00",
       picks: { mike: "cristian", annie: "lewis", michele: "ori", brandon: "jelly", mary: "jelly", kelsey: "brady", john: "maggie" },
+      events: [
+        { type: "reward", tribe: "toka" },
+        { type: "immunity", tribe: "toka" },
+        { type: "votesAgainst", castaway: "alexis", count: 3 },
+        { type: "votesAgainst", castaway: "devin", count: 1 },
+        { type: "votedOut", castaway: "alexis" },
+        { type: "votesAgainst", castaway: "linnea", count: 4 },
+        { type: "votesAgainst", castaway: "lewis", count: 4 },
+        { type: "votedOut", castaway: "linnea" },
+      ],
+    },
+    {
+      number: 6,
+      airsAt: "2026-10-28T20:00:00-04:00",
+      picks: {},
     },
   ],
 };
