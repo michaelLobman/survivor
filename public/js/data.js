@@ -122,6 +122,7 @@ const LEAGUE = {
       airsAt: "2026-10-21T20:00:00-04:00",
       picks: { mike: "cristian", annie: "lewis", michele: "ori", brandon: "jelly", mary: "jelly", kelsey: "brady", john: "maggie" },
       events: [
+        { type: "advantage", castaway: "maggie" },
         { type: "reward", tribe: "toka" },
         { type: "immunity", tribe: "toka" },
         { type: "votesAgainst", castaway: "alexis", count: 3 },
