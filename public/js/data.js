@@ -150,7 +150,7 @@ const LEAGUE = {
       number: 7,
       title: "You Broke My Heart Like I Was a Girl at the Prom",
       airsAt: "2026-11-04T20:00:00-05:00",
-      picks: { michele: "pinsky", kelsey: "carter", john: "maggie" },
+      picks: { mike: "thienan", michele: "pinsky", kelsey: "carter", john: "maggie" },
     },
   ],
 };
