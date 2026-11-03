@@ -135,8 +135,22 @@ const LEAGUE = {
     },
     {
       number: 6,
+      title: "I Love Crying",
       airsAt: "2026-10-28T20:00:00-04:00",
-      picks: { mike: "thienan" },
+      picks: { mike: "thienan", annie: "thienan", michele: "lewis", brandon: "sharonda", mary: "jelly", kelsey: "carter", john: "maggie" },
+      events: [
+        { type: "advantage", castaway: "kristin" },
+        { type: "immunity", tribe: "toka" },
+        { type: "immunity", tribe: "dina" },
+        { type: "votesAgainst", castaway: "ori", count: 2 },
+        { type: "votedOut", castaway: "ori" },
+      ],
+    },
+    {
+      number: 7,
+      title: "You Broke My Heart Like I Was a Girl at the Prom",
+      airsAt: "2026-11-04T20:00:00-05:00",
+      picks: { michele: "pinsky", kelsey: "carter", john: "maggie" },
     },
   ],
 };
